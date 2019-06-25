@@ -158,6 +158,13 @@ int database::addEntry(string name, string data)
     addLog("Opening table file (" + selectedDB + "/" + name + ".csv)", 0);
     ofstream tableFile;
     tableFile.open(selectedDB + "/" + name + ".csv", std::ios::app);
+    if (tableFile)
+        addLog("Table file opened", 0);
+    else
+    {
+        addLog("Can't open table file", 2);
+        return -2;
+    }
     tableFile << data << endl;
     tableFile.close();
     return 0;
@@ -173,9 +180,13 @@ int database::delEntry(string tableName, int columnNumber, string columnText)
     addLog("Temp file created", 0);
 
     addLog("Moving table from " + tableName + ".csv to " + tableName + ".tmp", 0);
-    vector<string> arr;
-    string str;
+
+    //Инициализируем временные переменные
+    string str;                 //Строка при переборе файла
+    vector<string> arr;         //Вектор для разделения строки
     bool founded = false;
+
+
     io::LineReader in(selectedDB + "/" + tableName + ".csv");
     while(char*line = in.next_line()){
         str = line;
