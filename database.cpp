@@ -157,7 +157,7 @@ int database::addEntry(string name, string data)
     //Сделать проверку на открытие файла
     addLog("Opening table file (" + selectedDB + "/" + name + ".csv)", 0);
     ofstream tableFile;
-    tableFile.open(selectedDB + "/" + name + ".csv", std::ios::app);
+    tableFile.open(selectedDB + "/" + name + ".csv", ios::app);
     if (tableFile)
         addLog("Table file opened", 0);
     else
@@ -176,9 +176,13 @@ int database::delEntry(string tableName, int columnNumber, string columnText)
 
     addLog("Creating temp table file (" + tableName + ".tmp)", 0);
     ofstream tableTempFile;
-    tableTempFile.open(selectedDB + "/" + tableName + ".tmp", std::ios::app);
+    tableTempFile.open(selectedDB + "/" + tableName + ".tmp", ios::app);
+    if (!tableTempFile)
+    {
+        addLog("Can't create table temp file", 2);
+        return -2;
+    }
     addLog("Temp file created", 0);
-
     addLog("Moving table from " + tableName + ".csv to " + tableName + ".tmp", 0);
 
     //Инициализируем временные переменные
@@ -189,8 +193,8 @@ int database::delEntry(string tableName, int columnNumber, string columnText)
 
     io::LineReader in(selectedDB + "/" + tableName + ".csv");
     while(char*line = in.next_line()){
-        str = line;
-        strCut(str, arr);
+        str = line;         //Обновляем текущую строку
+        strCut(str, arr);   //Разделяем строку и помещаем в вектор
 
         //Если строка не подходит по критерию ИЛИ уже найдена подходящая строка ТО добавляем строку в новый файл
         if (arr[columnNumber-1] != columnText || founded == true)
@@ -226,17 +230,27 @@ int database::checkTableAvlb(string name)
 {
     //Проверяем наличие таблицы в файле таблиц
     addLog("Checking the availability of the table " + name + " in table's list (tables.csv)", 0);
-    io::CSVReader<3>in(TABLES_LIST_FILE);
-    in.read_header(io::ignore_missing_column, "ID", "dbname", "name");
-    int SEARCH_id; string SEARCH_dbname, SEARCH_name;
-    while(in.read_row(SEARCH_id, SEARCH_dbname, SEARCH_name))
+
+    try
     {
-        if (name == SEARCH_name)
+        io::CSVReader<3>in(TABLES_LIST_FILE);
+        in.read_header(io::ignore_missing_column, "ID", "dbname", "name");
+        int SEARCH_id; string SEARCH_dbname, SEARCH_name;
+        while(in.read_row(SEARCH_id, SEARCH_dbname, SEARCH_name))
         {
-            addLog("Founded table with same name", 0);
-            return -1;
+            if (name == SEARCH_name)
+            {
+                addLog("Founded table with same name", 0);
+                return -1;
+            }
         }
     }
+    catch (...)
+    {
+        addLog("Can't read tables list file", 2);
+        return -2;
+    }
+
     addLog("Table with name " + name + " not founded", 0);
     return 0;
 }
@@ -245,16 +259,24 @@ int database::checkDBAvlb(string name)
 {
     //Проверяем наличие базы данных в файле баз данных
     addLog("Checking the availability of the database " + name + " in database's list (databases.csv)", 0);
-    io::CSVReader<2>in(DB_LIST_FILE);
-    in.read_header(io::ignore_missing_column, "ID", "name");
-    int SEARCH_id; string SEARCH_name;
-    while(in.read_row(SEARCH_id, SEARCH_name))
+    try
     {
-        if (name == SEARCH_name)
+        io::CSVReader<2>in(DB_LIST_FILE);
+        in.read_header(io::ignore_missing_column, "ID", "name");
+        int SEARCH_id; string SEARCH_name;
+        while(in.read_row(SEARCH_id, SEARCH_name))
         {
-            addLog("Founded database with same name", 0);
-            return -1;
+            if (name == SEARCH_name)
+            {
+                addLog("Founded database with same name", 0);
+                return -1;
+            }
         }
+    }
+    catch(...)
+    {
+        addLog("Can't read database list file", 2);
+        return -2;
     }
     addLog("Database with name " + name + " not founded", 0);
     return 0;

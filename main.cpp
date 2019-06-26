@@ -1,6 +1,7 @@
 #include <iostream>
 #include <string>
 #include <string.h>
+#include <asm/boot.h>
 
 #include "database.h"
 
@@ -9,10 +10,7 @@ using namespace std;
 int main()
 {
     database db;
-    /*
-    int status;
-    status = mkdir("Hello", S_IRWXU);
-    */
+
     int ans = 0;
     int tempint = 0;
     string temp, temp1, temp2;
@@ -71,6 +69,7 @@ int main()
         }
     }
     while(ans != 1);
+
 
     return 0;
 }
