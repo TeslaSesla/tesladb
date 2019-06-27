@@ -226,6 +226,46 @@ int database::delEntry(string tableName, int columnNumber, string columnText)
     return 0;
 }
 
+int database::searchLineInTableByRow(string tableName, int columnNumber, string columnData, string & strOut, string & typeNames)
+{
+    //Добавить проверку на нарушение целостности
+    int it = 0;
+    io::LineReader in(selectedDB + "/" + tableName + ".str");
+    while(char*line = in.next_line())
+    {
+        it++;
+        if (it == 2) typeNames = line;
+    }
+
+
+
+    //Инициализируем временные переменные
+    string str;                 //Строка при переборе файла
+    vector<string> arr;         //Вектор для разделения строки
+    int strCount = 0;
+
+
+    io::LineReader in2(selectedDB + "/" + tableName + ".csv");
+    while(char*line = in2.next_line())
+    {
+        strCount++;
+        if (strCount != 1)
+        {
+            str = line;         //Обновляем текущую строку
+            strCut(str, arr);   //Разделяем строку и помещаем в вектор
+
+            //Если строка подходит по критерию ТО возвращаем строку
+            if (arr[columnNumber-1] == columnData)
+            {
+                strOut = line;
+                return 0;   //Запрос найден
+            }
+        }
+    }
+    return -1;  //Ничего не найдено
+
+}
+
 int database::checkTableAvlb(string name)
 {
     //Проверяем наличие таблицы в файле таблиц

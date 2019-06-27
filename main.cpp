@@ -23,6 +23,7 @@ int main()
         cout << "4) Select DB"      << endl;
         cout << "5) Add entry"      << endl;
         cout << "6) Delete entry"   << endl;
+        cout << "7) Search row"     << endl;
         getline(cin, temp);
         ans = stoi(temp);
 
@@ -65,6 +66,13 @@ int main()
                 cout << "Data: ";
                 getline(cin, temp2);
                 cout << db.delEntry(temp, stoi(temp1), temp2) << endl;
+                break;
+            case 7:
+                cout << "Enter table name: ";
+                getline(cin, temp);
+                db.searchLineInTableByRow(temp, 1, "15", temp1, temp2);
+                cout << "Line: "  << temp1 << endl;
+                cout << "Types: " << temp2 << endl;
                 break;
         }
     }

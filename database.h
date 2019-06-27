@@ -15,6 +15,11 @@
 
 using namespace std;
 
+struct rawStr
+{
+    string str;
+    int typeInt;
+};
 
 class database
 {
@@ -37,9 +42,9 @@ class database
         int delAllEntry(string, int, string);           //Удаление всех записей из таблицы
         int delLastEntry(string, int);                  //Удаление X последних записей из таблицы
 
-
-        template <class T>
-        int searchRow(int, T&);   //Поиск строки по ID
+        //                         Имя Т.|№ ст|data ст| Вывод    |Типы данных
+        int searchLineInTableByRow(string, int, string, string &, string &); //Поиск первого подходящего элемента по содержанию и возврат элементов в векторе
+        int searchArrInTableByRow (string, int, string, string[], string &);  //Поиск всех подходящих элементов по содержанию
 
 
         //Система
