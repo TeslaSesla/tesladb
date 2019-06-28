@@ -495,6 +495,8 @@ int database::addLog(string message, short int signal)
         2 - ERROR
     */
 
+    if (enableLog == false) return -2;
+
     time_t t = time(NULL);
     struct tm *tm = localtime(&t);
     char date[25];
@@ -536,6 +538,23 @@ int database::selectDB(string name)
     selectedDB = name;
     addLog("Database " + name + " selected", 0);
     return 0;
+}
+
+int database::reloadConfigFile()
+{
+    string search1 = "enableLog";
+
+    io::CSVReader<2>in(OPTIONS_FILE);
+    in.read_header(io::ignore_missing_column, "option", "value");
+    string SEARCH_option; int SEARCH_value;
+    while(in.read_row(SEARCH_option, SEARCH_value))
+    {
+        if (SEARCH_option == search1)
+        {
+            if (SEARCH_value == 0 || SEARCH_value == 1)
+                enableLog = SEARCH_value;
+        }
+    }
 }
 
 database::~database()
