@@ -226,7 +226,7 @@ int database::delEntry(string tableName, int columnNumber, string columnText)
     return 0;
 }
 
-int database::searchLineInTableByRow(string tableName, int columnNumber, string columnData, string & strOut, string & typeNames)
+int database::getLineInTableByRow(string tableName, int columnNumber, string columnData, string & strOut, string & typeNames)
 {
     //Добавить проверку на нарушение целостности
     int it = 0;
@@ -264,6 +264,62 @@ int database::searchLineInTableByRow(string tableName, int columnNumber, string 
     }
     return -1;  //Ничего не найдено
 
+}
+
+int database::getArrInTableByRow(string tableName, int columnNumber, string columnData, vector<string> & strOut, string & typeNames)
+{
+    //Добавить проверку на нарушение целостности
+    int it = 0;
+    io::LineReader in(selectedDB + "/" + tableName + ".str");
+    while(char*line = in.next_line())
+    {
+        it++;
+        if (it == 2) typeNames = line;
+    }
+
+
+
+    //Инициализируем временные переменные
+    string str;                 //Строка при переборе файла
+    vector<string> arr;         //Вектор для разделения строки
+    int strCount = 0;
+
+
+    io::LineReader in2(selectedDB + "/" + tableName + ".csv");
+    while(char*line = in2.next_line())
+    {
+        strCount++;
+        if (strCount != 1)
+        {
+            str = line;         //Обновляем текущую строку
+            strCut(str, arr);   //Разделяем строку и помещаем в вектор
+
+            //Если строка подходит по критерию ТО возвращаем строку
+            if (arr[columnNumber-1] == columnData)
+            {
+                strOut.resize(strCount);
+                strOut[strCount - 1] = line;
+            }
+        }
+    }
+    return -1;  //Ничего не найдено
+
+}
+
+int database::getTableTypes(string tableName, string & typeOut)
+{
+    int it = 0;
+    io::LineReader in(selectedDB + "/" + tableName + ".str");
+    while(char*line = in.next_line())
+    {
+        it++;
+        if (it == 2)
+        {
+            typeOut = line;
+            return 0;
+        }
+    }
+    return -1;
 }
 
 int database::checkTableAvlb(string name)

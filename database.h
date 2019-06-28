@@ -42,9 +42,9 @@ class database
         int delAllEntry(string, int, string);           //Удаление всех записей из таблицы
         int delLastEntry(string, int);                  //Удаление X последних записей из таблицы
 
-        //                         Имя Т.|№ ст|data ст| Вывод    |Типы данных
-        int searchLineInTableByRow(string, int, string, string &, string &); //Поиск первого подходящего элемента по содержанию и возврат элементов в векторе
-        int searchArrInTableByRow (string, int, string, string[], string &);  //Поиск всех подходящих элементов по содержанию
+        //                         Имя Т.|№ ст|data ст |Вывод           |Типы данных
+        int getLineInTableByRow(string, int, string, string &,        string &); //Поиск первого подходящего элемента по содержанию и возврат элементов в векторе
+        int getArrInTableByRow (string, int, string, vector<string>&, string &);  //Поиск всех подходящих элементов по содержанию
 
 
         //Система
@@ -58,14 +58,16 @@ class database
 
     private:
 
-        int addLog(string, short int = 0);          //Создаём отчёт
+        int addLog(string, short int = 0);      //Создаём отчёт
         int strCut(string, vector<string>&);    //Распознаём подстроки в строке
 
-        int addTableToList(string);             //Добавить таблицу в список таблиц
-        int addDBToList(string);                //Добавить базу данных в список баз данных
+        int addTableToList(string);     //Добавить таблицу в список таблиц
+        int addDBToList(string);        //Добавить базу данных в список баз данных
 
-        int checkTableAvlb(string);             //Проверить наличие таблицы
-        int checkDBAvlb(string);                //Проверить наличие базы данных
+        int checkTableAvlb(string);     //Проверить наличие таблицы
+        int checkDBAvlb(string);        //Проверить наличие базы данных
+
+        int getTableTypes(string, string&);   //Возвращает типы указанной таблицы
 
         string selectedDB = "NONE";  //Выбранная база данных
 

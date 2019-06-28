@@ -70,7 +70,7 @@ int main()
             case 7:
                 cout << "Enter table name: ";
                 getline(cin, temp);
-                db.searchLineInTableByRow(temp, 1, "15", temp1, temp2);
+                db.getLineInTableByRow(temp, 1, "15", temp1, temp2);
                 cout << "Line: "  << temp1 << endl;
                 cout << "Types: " << temp2 << endl;
                 break;
