@@ -13,17 +13,19 @@ int main()
 
     int ans = 0;
     int tempint = 0;
-    string temp, temp1, temp2;
+    string temp, temp1, temp2, temp3, temp4;
+    vector<string> temparr;
 
     do
     {
-        cout << "1) Exit"           << endl;
-        cout << "2) Create DB"      << endl;
-        cout << "3) Create table"   << endl;
-        cout << "4) Select DB"      << endl;
-        cout << "5) Add entry"      << endl;
-        cout << "6) Delete entry"   << endl;
-        cout << "7) Search row"     << endl;
+        cout << "1) Exit"               << endl;
+        cout << "2) Create DB"          << endl;
+        cout << "3) Create table"       << endl;
+        cout << "4) Select DB"          << endl;
+        cout << "5) Add entry"          << endl;
+        cout << "6) Delete entry"       << endl;
+        cout << "7) Search row"         << endl;
+        cout << "8) Search row array"   << endl;
         getline(cin, temp);
         ans = stoi(temp);
 
@@ -70,10 +72,28 @@ int main()
             case 7:
                 cout << "Enter table name: ";
                 getline(cin, temp);
-                db.getLineInTableByRow(temp, 1, "15", temp1, temp2);
+                cout << "Enter column name: ";
+                getline(cin, temp4);
+                cout << "Enter search data: ";
+                getline(cin, temp3);
+                db.getLineInTableByRow(temp, stoi(temp4), temp3, temp1, temp2);
                 cout << "Line: "  << temp1 << endl;
                 cout << "Types: " << temp2 << endl;
                 break;
+            case 8:
+                cout << "Enter table name: ";
+                getline(cin, temp);
+                cout << "Enter column name: ";
+                getline(cin, temp4);
+                cout << "Enter search data: ";
+                getline(cin, temp3);
+                db.getArrInTableByRow(temp, stoi(temp4), temp3, temparr, temp2);
+                cout << "Lines: " << endl;
+                for (int i = 0; i < temparr.size(); i++)
+                {
+                    cout << i << ") " << temparr[i] << endl;
+                }
+                cout << "Types: " << temp2 << endl;
         }
     }
     while(ans != 1);

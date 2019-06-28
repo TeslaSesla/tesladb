@@ -228,14 +228,8 @@ int database::delEntry(string tableName, int columnNumber, string columnText)
 
 int database::getLineInTableByRow(string tableName, int columnNumber, string columnData, string & strOut, string & typeNames)
 {
-    //Добавить проверку на нарушение целостности
-    int it = 0;
-    io::LineReader in(selectedDB + "/" + tableName + ".str");
-    while(char*line = in.next_line())
-    {
-        it++;
-        if (it == 2) typeNames = line;
-    }
+
+    getTableTypes(tableName, typeNames);
 
 
 
@@ -268,21 +262,16 @@ int database::getLineInTableByRow(string tableName, int columnNumber, string col
 
 int database::getArrInTableByRow(string tableName, int columnNumber, string columnData, vector<string> & strOut, string & typeNames)
 {
-    //Добавить проверку на нарушение целостности
-    int it = 0;
-    io::LineReader in(selectedDB + "/" + tableName + ".str");
-    while(char*line = in.next_line())
-    {
-        it++;
-        if (it == 2) typeNames = line;
-    }
+
+    getTableTypes(tableName, typeNames);
 
 
 
     //Инициализируем временные переменные
     string str;                 //Строка при переборе файла
     vector<string> arr;         //Вектор для разделения строки
-    int strCount = 0;
+    int strCount = 0;           //Всего строк
+    int strFounded = 0;         //Найденных строк
 
 
     io::LineReader in2(selectedDB + "/" + tableName + ".csv");
@@ -297,8 +286,9 @@ int database::getArrInTableByRow(string tableName, int columnNumber, string colu
             //Если строка подходит по критерию ТО возвращаем строку
             if (arr[columnNumber-1] == columnData)
             {
-                strOut.resize(strCount);
-                strOut[strCount - 1] = line;
+                strFounded++;
+                strOut.resize(strFounded);
+                strOut[strFounded - 1] = line;
             }
         }
     }
@@ -308,6 +298,7 @@ int database::getArrInTableByRow(string tableName, int columnNumber, string colu
 
 int database::getTableTypes(string tableName, string & typeOut)
 {
+    //Добавить проверку на нарушение целостности
     int it = 0;
     io::LineReader in(selectedDB + "/" + tableName + ".str");
     while(char*line = in.next_line())
