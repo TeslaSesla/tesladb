@@ -9,6 +9,7 @@ database::database()
 {
     //Конструктор
 
+    //Создаём системную директорию
     createSystemDir();
 }
 
@@ -47,21 +48,42 @@ int database::createSystemDir()
         addLog("Options file created.", 0);
         optionsFile.close();
 
+        return 0;
+    }
+    else if (status == -1)
+    {
+        addLog("System dir already created", 0);
+        return -1;
     }
 
+
+    string errorOut = strerror(errno);
+    addLog("Something went wrong when creating a system directory " + errorOut, 2);
     return status;
 }
 
 int database::createDB(string name)
 {
-    if (selectedDB == "NONE") return -4;
+    addLog("Creating database with name " + name + "...", 0);
+
+    //Если не выбрана база данных
+    if (selectedDB == "NONE")
+    {
+        addLog("No database selected", 2);
+        return -4;
+    }
+
+
+    //Создаём временные переменные
+    int it = 0;             //Итерации
+    int SEARCH_id;          //Поиск БД: id
+    string SEARCH_name;     //Поиск БД: имя БД
 
     //Ищем индекс последней базы данных
-    addLog("Creating database with name " + name + "...", 0);
     io::CSVReader<2>in(DB_LIST_FILE);
     in.read_header(io::ignore_missing_column, "ID", "name");
-    int it = 0;
-    int SEARCH_id; string SEARCH_name;
+
+    //Перебор таблицы со списком БД
     while(in.read_row(SEARCH_id, SEARCH_name))
     {
         if (name == SEARCH_name)
@@ -75,7 +97,7 @@ int database::createDB(string name)
 
     //Добавляем базу данных в список баз данных
     ofstream dbFile;
-    dbFile.open(DB_LIST_FILE, std::ios::app);
+    dbFile.open(DB_LIST_FILE, ios::app);
     dbFile << it << ", " << name << endl;
     dbFile.close();
     addLog("Database added to list", 1);
@@ -83,6 +105,7 @@ int database::createDB(string name)
     //Создаём директорию
     int status;
     status = mkdir(name.c_str(), S_IRWXU);
+
     if (status == 0)
         addLog("Database created!", 0);
     else if (status == -1)
@@ -92,7 +115,8 @@ int database::createDB(string name)
     }
     else
     {
-        addLog("Can't create database directory (mkdir returned value " + to_string(status) + ")", 2);
+        string errOut = strerror(errno);
+        addLog("Can't create database directory (mkdir returned value " + to_string(status) + ")\n" + errOut, 2);
         return -3;  //mkdir вернула неизвестное значение
     }
 
@@ -107,7 +131,7 @@ int database::createTable(string name, string strNames, string strTypes, int ind
     if (checkTableAvlb(name) != 0) return -1;
 
 
-    //Файл структуры таблицы
+    //Создаём файл структуры таблицы
     addLog("Creating structure file (str)", 0);
     ofstream tableFileConfig;
     tableFileConfig.open(selectedDB + "/" + name + ".str");
@@ -116,7 +140,7 @@ int database::createTable(string name, string strNames, string strTypes, int ind
     tableFileConfig.close();
 
 
-    //Файл конфигурации таблицы
+    //Создаём файл конфигурации таблицы
     addLog("Creating table options file (" + name + "_options.csv)", 0);
     ofstream tableOptionsFile;
     tableOptionsFile.open(selectedDB + "/" + name + "_options.csv");            //Открываем файл конфигураций таблицы
@@ -125,7 +149,7 @@ int database::createTable(string name, string strNames, string strTypes, int ind
     tableOptionsFile.close();
 
 
-    //Файл таблицы
+    //Создаём файл таблицы
     addLog("Creating table file (" + name + ".csv)", 0);
     ofstream tableFile;
     tableFile.open(selectedDB + "/" + name + ".csv");
@@ -175,6 +199,7 @@ int database::delEntry(string tableName, int columnNumber, string columnText)
     if (checkTableAvlb(tableName) != -1) return -1;
 
     addLog("Creating temp table file (" + tableName + ".tmp)", 0);
+
     ofstream tableTempFile;
     tableTempFile.open(selectedDB + "/" + tableName + ".tmp", ios::app);
     if (!tableTempFile)
@@ -182,6 +207,7 @@ int database::delEntry(string tableName, int columnNumber, string columnText)
         addLog("Can't create table temp file", 2);
         return -2;
     }
+
     addLog("Temp file created", 0);
     addLog("Moving table from " + tableName + ".csv to " + tableName + ".tmp", 0);
 
@@ -192,7 +218,8 @@ int database::delEntry(string tableName, int columnNumber, string columnText)
 
 
     io::LineReader in(selectedDB + "/" + tableName + ".csv");
-    while(char*line = in.next_line()){
+    while(char*line = in.next_line())
+    {
         str = line;         //Обновляем текущую строку
         strCut(str, arr);   //Разделяем строку и помещаем в вектор
 
@@ -229,14 +256,14 @@ int database::delEntry(string tableName, int columnNumber, string columnText)
 int database::getLineInTableByRow(string tableName, int columnNumber, string columnData, string & strOut, string & typeNames)
 {
 
+    //Получаем запись типов столбиков
     getTableTypes(tableName, typeNames);
 
 
-
     //Инициализируем временные переменные
-    string str;                 //Строка при переборе файла
-    vector<string> arr;         //Вектор для разделения строки
-    int strCount = 0;
+    string str;             //Строка при переборе файла
+    vector<string> arr;     //Вектор для разделения строки
+    int strCount = 0;       //Кол-во строк найденных в файле
 
 
     io::LineReader in2(selectedDB + "/" + tableName + ".csv");
@@ -245,33 +272,35 @@ int database::getLineInTableByRow(string tableName, int columnNumber, string col
         strCount++;
         if (strCount != 1)
         {
+            //Обновляем переменные
             str = line;         //Обновляем текущую строку
             strCut(str, arr);   //Разделяем строку и помещаем в вектор
 
             //Если строка подходит по критерию ТО возвращаем строку
             if (arr[columnNumber-1] == columnData)
             {
+                //Приравниваем выходной параметр к текущей строке
                 strOut = line;
-                return 0;   //Запрос найден
+                return 0;
             }
         }
     }
-    return -1;  //Ничего не найдено
 
+    return -1;  //Ничего не найдено
 }
 
 int database::getArrInTableByRow(string tableName, int columnNumber, string columnData, vector<string> & strOut, string & typeNames)
 {
 
+    //Получаем запись типов столбиков
     getTableTypes(tableName, typeNames);
 
 
-
     //Инициализируем временные переменные
-    string str;                 //Строка при переборе файла
-    vector<string> arr;         //Вектор для разделения строки
-    int strCount = 0;           //Всего строк
-    int strFounded = 0;         //Найденных строк
+    string str;             //Строка при переборе файла
+    vector<string> arr;     //Вектор для разделения строки
+    int strCount   = 0;     //Всего строк
+    int strFounded = 0;     //Найденных строк
 
 
     io::LineReader in2(selectedDB + "/" + tableName + ".csv");
@@ -284,7 +313,7 @@ int database::getArrInTableByRow(string tableName, int columnNumber, string colu
             strCut(str, arr);   //Разделяем строку и помещаем в вектор
 
             //Если строка подходит по критерию ТО возвращаем строку
-            if (arr[columnNumber-1] == columnData)
+            if (arr[columnNumber - 1] == columnData)
             {
                 strFounded++;
                 strOut.resize(strFounded);
