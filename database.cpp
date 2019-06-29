@@ -11,6 +11,11 @@ database::database()
 
     //Создаём системную директорию
     createSystemDir();
+
+    //Перезагружаем файл конфигураций
+    reloadConfigFile();
+
+    addLog("Database initializated", 0);
 }
 
 int database::createSystemDir()
@@ -52,11 +57,13 @@ int database::createSystemDir()
     }
     else if (status == -1)
     {
-        addLog("System dir already created", 0);
+        if (!enableLog)
+            addLog("System dir already created", 0);
         return -1;
     }
 
 
+    //Что-то пошло не так, ветвление не выполнилось
     string errorOut = strerror(errno);
     addLog("Something went wrong when creating a system directory " + errorOut, 2);
     return status;
@@ -134,28 +141,56 @@ int database::createTable(string name, string strNames, string strTypes, int ind
     //Создаём файл структуры таблицы
     addLog("Creating structure file (str)", 0);
     ofstream tableFileConfig;
-    tableFileConfig.open(selectedDB + "/" + name + ".str");
-    tableFileConfig << strNames << endl;
-    tableFileConfig << strTypes << endl;
+    try
+    {
+        tableFileConfig.open(selectedDB + "/" + name + ".str");
+        tableFileConfig << strNames << endl;    //Записываем структуру имён (названия столбиков)
+        tableFileConfig << strTypes << endl;    //Записываем структуру типов данных
+    }
+    catch (...)
+    {
+        string errOut = strerror(errno);
+        addLog("Can't create structure file " + errOut, 2);
+        return -2;
+    }
     tableFileConfig.close();
 
 
     //Создаём файл конфигурации таблицы
     addLog("Creating table options file (" + name + "_options.csv)", 0);
     ofstream tableOptionsFile;
-    tableOptionsFile.open(selectedDB + "/" + name + "_options.csv");            //Открываем файл конфигураций таблицы
-    tableOptionsFile << "option, value" << endl;                                //Устанавливаем структуру файла конфигураций
-    tableOptionsFile << "indexColumnNumber, " << indexColumnNumber << endl;     //Устанавливаем настройку "Индексный столбец"
+    try
+    {
+        tableOptionsFile.open(selectedDB + "/" + name + "_options.csv");            //Открываем файл конфигураций таблицы
+        tableOptionsFile << "option, value" << endl;                                //Устанавливаем структуру файла конфигураций
+        tableOptionsFile << "indexColumnNumber, " << indexColumnNumber << endl;     //Устанавливаем настройку "Индексный столбец"
+    }
+    catch (...)
+    {
+        string errOut = strerror(errno);
+        addLog("Can't create options file " + errOut, 2);
+        return -3;
+    }
     tableOptionsFile.close();
 
 
     //Создаём файл таблицы
     addLog("Creating table file (" + name + ".csv)", 0);
     ofstream tableFile;
-    tableFile.open(selectedDB + "/" + name + ".csv");
-    tableFile << strNames << endl;
+    try
+    {
+        tableFile.open(selectedDB + "/" + name + ".csv");
+        tableFile << strNames << endl;  //Записываем названия столбиков
+    }
+    catch (...)
+    {
+        string errOut = strerror(errno);
+        addLog("Can't create table file " + errOut, 2);
+        return -4;
+    }
     tableFile.close();
 
+    //Добавляем таблицу в список таблиц
     addTableToList(name);
 
 
@@ -453,12 +488,16 @@ int database::strCut(string inStr, vector<string> & substringArr)
 int database::addTableToList(string name)
 {
     addLog("Adding table to list", 1);
-    int lastTableId = 0;
-    int it = 0;
+
+    //Ищем индекс последней таблицы
+    int lastTableId = 0;    //Идентификатор последней таблицы
+    int it = 0;             //Кол-во таблиц (итераций)
     try
     {
         //Чтение таблиц
         addLog("Reading tables indexes", 0);
+
+        //Проходим по всему файлу
         io::CSVReader<3>in(TABLES_LIST_FILE);
         in.read_header(io::ignore_missing_column, "ID", "dbname", "name");
         int SEARCH_id; string SEARCH_dbname, SEARCH_name;
@@ -474,15 +513,24 @@ int database::addTableToList(string name)
         return -1;
     }
 
-    ofstream tableConfigFile;
-    tableConfigFile.open(TABLES_LIST_FILE, std::ios::app);
+    //Добавляем таблицу в список
+    ofstream tableListFile;
+
+    //Открываем список таблиц с параметром записи в конец
+    tableListFile.open(TABLES_LIST_FILE, ios::app);
 
     if (it == 0)
-        tableConfigFile << it << ", " << selectedDB << ", " << name << endl;
+        //Если это первая таблица в списке
+        tableListFile << it << ", " << selectedDB << ", " << name << endl;
     else
-        tableConfigFile << lastTableId + 1 << ", " << selectedDB << ", " << name << endl;
+        //Если это не первая таблица в списке
+        tableListFile << lastTableId + 1 << ", " << selectedDB << ", " << name << endl;
 
-    tableConfigFile.close();
+
+    //Закрываем файл со списком таблиц
+    tableListFile.close();
+
+
     addLog("Table added!", 0);
     return 0;
 }
@@ -552,7 +600,9 @@ int database::reloadConfigFile()
         if (SEARCH_option == search1)
         {
             if (SEARCH_value == 0 || SEARCH_value == 1)
+            {
                 enableLog = SEARCH_value;
+            }
         }
     }
 }
