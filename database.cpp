@@ -137,6 +137,21 @@ int database::createTable(string name, string strNames, string strTypes, int ind
     //Если такая таблица уже есть
     if (checkTableAvlb(name) != 0) return -1;
 
+    if (indexColumnNumber != 0)
+    {
+        vector<string> temparr;
+        strCut(strNames, temparr);
+        temparr.insert(temparr.begin() + indexColumnNumber - 1, "ID");
+        string newStrNames;
+
+        for (int i = 0; i < temparr.size(); i++)
+        {
+            newStrNames += temparr[i];
+            if (i != temparr.size() - 1)
+                newStrNames += ", ";
+        }
+        strNames = newStrNames;
+    }
 
     //Создаём файл структуры таблицы
     addLog("Creating structure file (str)", 0);
@@ -197,6 +212,32 @@ int database::createTable(string name, string strNames, string strTypes, int ind
     return 0;
 }
 
+int database::getIndexColumn(string tableName, int & columnNumber)
+{
+    string SEARCH_option;
+    int SEARCH_value;
+
+    addLog("Looking for option \"indexColumnNumber\" (" + tableName + "_options.csv)", 0);
+
+    //Ищем параметр indexColumnNumber
+    io::CSVReader<2> in(selectedDB + "/" + tableName + "_options.csv");
+    in.read_header(io::ignore_missing_column, "option", "value");
+
+    string searchStr = "indexColumnNumber";
+
+    //Перебор таблицы со списком БД
+    while(in.read_row(SEARCH_option, SEARCH_value))
+    {
+        if (SEARCH_option == searchStr)
+        {
+            columnNumber = SEARCH_value;
+            return 0;
+        }
+    }
+    addLog("Option indexColumnNumber not founded", 1);
+    return -1;
+}
+
 int database::addEntry(string name, string data)
 {
     addLog("Adding a entry to table " + name + " in database " + selectedDB, 0);
@@ -224,8 +265,87 @@ int database::addEntry(string name, string data)
         addLog("Can't open table file", 2);
         return -2;
     }
-    tableFile << data << endl;
+
+    int indexColumn = 0;
+    getIndexColumn(name, indexColumn);
+
+    if (indexColumn == 0)
+    {
+        //Индексный столбик отстутствует - просто добавляем запись
+        tableFile << data << endl;
+    }
+    else
+    {
+        vector<string> arr; //Вектор для разделения строки
+        string lastLine;    //Последняя строка
+        int lastIndex = 0;  //Последний индекс
+        string lastIndexTemp;
+
+        //Получаем последнюю строку из файла
+        if (getLastLine(name, lastLine) == 0)
+        {
+            strCut(lastLine, arr);  //Разделяем последнюю строку
+
+
+            lastIndexTemp = arr[indexColumn - 1];
+            lastIndex = stoi(lastIndexTemp); //Получаем последний индекс
+
+            vector<string> dataarr;
+            int indexToInsert = lastIndex + 1;
+
+            strCut(data, dataarr);
+            dataarr.insert(dataarr.begin() + indexColumn - 1, to_string(indexToInsert));
+
+            string outStr = "";
+
+            for (int i = 0; i < dataarr.size(); i++)
+            {
+                outStr += dataarr[i];
+                if (i != dataarr.size() - 1)
+                    outStr += ", ";
+            }
+
+            tableFile << outStr << endl;
+        }
+        else
+        {
+            vector<string> temparr;
+            strCut(data, temparr);
+            temparr.insert(temparr.begin() + indexColumn - 1, "0");
+            string outStr = "";
+
+            for (int i = 0; i < temparr.size(); i++)
+            {
+                outStr += temparr[i];
+                if (i != temparr.size() - 1)
+                    outStr += ", ";
+            }
+
+            tableFile << outStr << endl;
+        }
+
+
+
+
+    }
     tableFile.close();
+    return 0;
+}
+
+int database::getLastLine(string tableName, string & strOut)
+{
+    int it = 0;
+
+    addLog("Searching last line in table " + tableName, 0);
+    io::LineReader in2(selectedDB + "/" + tableName + ".csv");
+    while(char*line = in2.next_line())
+    {
+        strOut = line;
+        it++;
+    }
+    if (it < 2)
+        return -2;
+
     return 0;
 }
 

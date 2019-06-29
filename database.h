@@ -36,6 +36,7 @@ class database
         //Работа с таблицей
         int createTable (string, string, string, int = 0);   //Создание таблицы в выбранной БД
         int deleteTable (string);                            //Удаление таблицы в выбранной БД
+        int getLastLine (string, string&);                   //Возвращает последнюю найденную строку
         int addEntry    (string, string);                    //Добавление записи в таблицу
         int delEntry    (string, int,    string);            //Удаление одной записи из таблицы
         int delAllEntry (string, int,    string);            //Удаление всех записей из таблицы
@@ -45,6 +46,10 @@ class database
         int getLineInTableByRow(string, int, string, string &,        string &);    //Поиск первого подходящего элемента по содержанию и возврат элементов в векторе
         int getArrInTableByRow (string, int, string, vector<string>&, string &);    //Поиск всех подходящих элементов по содержанию
 
+
+        //Проверка наличия
+        int checkTableAvlb(string);     //Проверить наличие таблицы
+        int checkDBAvlb(string);        //Проверить наличие базы данных
 
         //Система
         int reloadConfigFile();   //Перезагрузить файл конфигураций
@@ -61,15 +66,15 @@ class database
 
     private:
 
+        //Отладка и всё что с ней связано
         int addLog(string, short int = 0);      //Создаём отчёт
 
+        //Добавление данных в списки
         int addTableToList(string);     //Добавить таблицу в список таблиц
         int addDBToList(string);        //Добавить базу данных в список баз данных
 
-        int checkTableAvlb(string);     //Проверить наличие таблицы
-        int checkDBAvlb(string);        //Проверить наличие базы данных
-
-        int getTableTypes(string, string&);   //Возвращает типы указанной таблицы
+        int getTableTypes(string, string&); //Возвращает типы указанной таблицы
+        int getIndexColumn(string, int&);   //Возвращает индексный столбик
 
         string selectedDB = "NONE";  //Выбранная база данных
 

@@ -46,7 +46,9 @@ int main()
                 getline(cin, temp1);
                 cout << "Enter table types: ";
                 getline(cin, temp2);
-                cout << db.createTable(temp, temp1, temp2) << endl;
+                cout << "Enter index column: ";
+                getline(cin, temp3);
+                cout << db.createTable(temp, temp1, temp2, stoi(temp3)) << endl;
                 break;
             case 4:
                 cout << "Enter DB name: ";
