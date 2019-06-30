@@ -141,6 +141,7 @@ int database::createTable(string name, string strNames, string strTypes, int ind
     {
         vector<string> temparr;
         strCut(strNames, temparr);
+        // TODO (nikolay#5#): Добавить возможность указывать произвольное название для индексных столбцов
         temparr.insert(temparr.begin() + indexColumnNumber - 1, "ID");
         string newStrNames;
 
