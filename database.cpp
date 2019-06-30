@@ -276,58 +276,45 @@ int database::addEntry(string name, string data)
     }
     else
     {
-        vector<string> arr; //Вектор для разделения строки
-        string lastLine;    //Последняя строка
-        int lastIndex = 0;  //Последний индекс
-        string lastIndexTemp;
+        vector<string> arr;     //Вектор для разделения строки
+        string lastLine;        //Последняя строка
+        int lastIndex = 0;      //Последний индекс
+        string lastIndexTemp;   //Индекс последней найденной записи
 
-        //Получаем последнюю строку из файла
+        vector<string> dataarr; //Выходной вектор для объеденения индекса и записи
+        int indexToInsert = 0;  //Индекс который будет добавлен в новую запись
+        string outStr = "";     //Выходная строка
+
+
+        //Если это не первая строка
         if (getLastLine(name, lastLine) == 0)
         {
             strCut(lastLine, arr);  //Разделяем последнюю строку
 
-
             lastIndexTemp = arr[indexColumn - 1];
             lastIndex = stoi(lastIndexTemp); //Получаем последний индекс
 
-            vector<string> dataarr;
-            int indexToInsert = lastIndex + 1;
+            indexToInsert = lastIndex + 1;  //Индекс новой строки
 
-            strCut(data, dataarr);
-            dataarr.insert(dataarr.begin() + indexColumn - 1, to_string(indexToInsert));
-
-            string outStr = "";
-
-            for (int i = 0; i < dataarr.size(); i++)
-            {
-                outStr += dataarr[i];
-                if (i != dataarr.size() - 1)
-                    outStr += ", ";
-            }
-
-            tableFile << outStr << endl;
         }
-        else
+
+
+        strCut(data, dataarr);  //Разделяем исходную строку
+        dataarr.insert(dataarr.begin() + indexColumn - 1, to_string(indexToInsert));
+
+
+        for (int i = 0; i < dataarr.size(); i++)
         {
-            vector<string> temparr;
-            strCut(data, temparr);
-            temparr.insert(temparr.begin() + indexColumn - 1, "0");
-            string outStr = "";
-
-            for (int i = 0; i < temparr.size(); i++)
-            {
-                outStr += temparr[i];
-                if (i != temparr.size() - 1)
-                    outStr += ", ";
-            }
-
-            tableFile << outStr << endl;
+            outStr += dataarr[i];
+            if (i != dataarr.size() - 1)
+                outStr += ", ";
         }
 
-
+        tableFile << outStr << endl;
 
 
     }
+
     tableFile.close();
     return 0;
 }
@@ -344,7 +331,7 @@ int database::getLastLine(string tableName, string & strOut)
         it++;
     }
     if (it < 2)
-        return -2;
+        return -2;  //В файле только 1 строка
 
     return 0;
 }
