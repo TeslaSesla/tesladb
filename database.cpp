@@ -71,18 +71,10 @@ int database::createSystemDir()
 
 int database::createDB(string name)
 {
-    addLog("Creating database with name " + name + "...", 0);
-
-    //Если не выбрана база данных
-    if (selectedDB == "NONE")
-    {
-        addLog("No database selected", 2);
-        return -4;
-    }
-
+    addLog("Creating database " + name + "...", 0);
 
     //Создаём временные переменные
-    int it = 0;             //Итерации
+    int it = 0;             //Счётчик итераций
     int SEARCH_id;          //Поиск БД: id
     string SEARCH_name;     //Поиск БД: имя БД
 
@@ -113,18 +105,21 @@ int database::createDB(string name)
     int status;
     status = mkdir(name.c_str(), S_IRWXU);
 
+    //Смотрим значение которое вернула mkdir
     if (status == 0)
         addLog("Database created!", 0);
     else if (status == -1)
     {
+        //Папка с названием базы данных уже существует
         addLog("Can't create database directory, directory with this name already exists.", 2);
-        return -2;  //Папка с названием базы данных уже существует
+        return -2;
     }
     else
     {
+        //mkdir вернула неизвестное значение
         string errOut = strerror(errno);
         addLog("Can't create database directory (mkdir returned value " + to_string(status) + ")\n" + errOut, 2);
-        return -3;  //mkdir вернула неизвестное значение
+        return -3;
     }
 
     return 0;
@@ -132,30 +127,22 @@ int database::createDB(string name)
 
 int database::createTable(string name, string strNames, string strTypes, int indexColumnNumber)
 {
-    addLog("Creating table " + name + " in database " + selectedDB + "...", 0);
+    addLog("Creating table " + name, 0);
 
     //Если такая таблица уже есть
     if (checkTableAvlb(name) != 0) return -1;
 
-    if (indexColumnNumber != 0)
-    {
-        vector<string> temparr;
-        strCut(strNames, temparr);
-        // TODO (nikolay#5#): Добавить возможность указывать произвольное название для индексных столбцов
-        temparr.insert(temparr.begin() + indexColumnNumber - 1, "ID");
-        string newStrNames;
 
-        for (int i = 0; i < temparr.size(); i++)
-        {
-            newStrNames += temparr[i];
-            if (i != temparr.size() - 1)
-                newStrNames += ", ";
-        }
-        strNames = newStrNames;
+    //Если не выбрана база данных
+    if (selectedDB == "NONE")
+    {
+        addLog("No database selected", 2);
+        return -5;
     }
 
+
     //Создаём файл структуры таблицы
-    addLog("Creating structure file (str)", 0);
+    addLog("Creating structure file (.str)", 0);
     ofstream tableFileConfig;
     try
     {
@@ -215,16 +202,14 @@ int database::createTable(string name, string strNames, string strTypes, int ind
 
 int database::getIndexColumn(string tableName, int & columnNumber)
 {
-    string SEARCH_option;
-    int SEARCH_value;
-
-    addLog("Looking for option \"indexColumnNumber\" (" + tableName + "_options.csv)", 0);
+    addLog("Looking for option indexColumnNumber (" + tableName + "_options.csv)", 0);
 
     //Ищем параметр indexColumnNumber
     io::CSVReader<2> in(selectedDB + "/" + tableName + "_options.csv");
     in.read_header(io::ignore_missing_column, "option", "value");
 
-    string searchStr = "indexColumnNumber";
+    string searchStr = "indexColumnNumber"; //Строка которую нужно найти
+    string SEARCH_option; int SEARCH_value; //Переменные для поиска
 
     //Перебор таблицы со списком БД
     while(in.read_row(SEARCH_option, SEARCH_value))
@@ -241,7 +226,7 @@ int database::getIndexColumn(string tableName, int & columnNumber)
 
 int database::addEntry(string name, string data)
 {
-    addLog("Adding a entry to table " + name + " in database " + selectedDB, 0);
+    addLog("Adding a entry to table " + name, 0);
 
     //Если таблица не существует
     if (checkTableAvlb(name) == -1)
@@ -256,7 +241,7 @@ int database::addEntry(string name, string data)
 
     //Сделать проверку на правильность структуры
     //Сделать проверку на открытие файла
-    addLog("Opening table file (" + selectedDB + "/" + name + ".csv)", 0);
+    addLog("Opening table file (" +  name + ".csv)", 0);
     ofstream tableFile;
     tableFile.open(selectedDB + "/" + name + ".csv", ios::app);
     if (tableFile)
@@ -324,7 +309,7 @@ int database::getLastLine(string tableName, string & strOut)
 {
     int it = 0;
 
-    addLog("Searching last line in table " + tableName, 0);
+    addLog("Searching last line in table " + tableName);
     io::LineReader in2(selectedDB + "/" + tableName + ".csv");
     while(char*line = in2.next_line())
     {
@@ -332,7 +317,10 @@ int database::getLastLine(string tableName, string & strOut)
         it++;
     }
     if (it < 2)
+    {
+        addLog("Founded file have only 1 line", 1);
         return -2;  //В файле только 1 строка
+    }
 
     return 0;
 }
@@ -341,7 +329,7 @@ int database::delEntry(string tableName, int columnNumber, string columnText)
 {
     if (checkTableAvlb(tableName) != -1) return -1;
 
-    addLog("Creating temp table file (" + tableName + ".tmp)", 0);
+    addLog("Creating temp table file (" + tableName + ".tmp)");
 
     ofstream tableTempFile;
     tableTempFile.open(selectedDB + "/" + tableName + ".tmp", ios::app);
@@ -352,7 +340,7 @@ int database::delEntry(string tableName, int columnNumber, string columnText)
     }
 
     addLog("Temp file created", 0);
-    addLog("Moving table from " + tableName + ".csv to " + tableName + ".tmp", 0);
+    addLog("Moving table from " + tableName + ".csv to " + tableName + ".tmp");
 
     //Инициализируем временные переменные
     string str;                 //Строка при переборе файла
@@ -494,7 +482,11 @@ int database::checkTableAvlb(string name)
     {
         io::CSVReader<3>in(TABLES_LIST_FILE);
         in.read_header(io::ignore_missing_column, "ID", "dbname", "name");
-        int SEARCH_id; string SEARCH_dbname, SEARCH_name;
+
+        int SEARCH_id;          //Поиск таблицы: идентификатор
+        string SEARCH_dbname,   //Поиск таблицы: имя базы данных
+               SEARCH_name;     //Поиск таблицы: имя таблицы
+
         while(in.read_row(SEARCH_id, SEARCH_dbname, SEARCH_name))
         {
             if (name == SEARCH_name)
