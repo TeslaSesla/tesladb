@@ -1,3 +1,27 @@
+/*
+    Copyright: (2019) Nikolay Tetus <nikolaytetus@gmail.com>
+    License: GNU GPLv3
+
+    All rights reserved.
+
+
+    This file is part of Tesladb.
+
+    TeslaDB is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Tesladb is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Tesladb.  If not, see <https://www.gnu.org/licenses/>.
+*/
+
+
 #include "database.h"
 
 #define DB_LIST_FILE            "dbFiles/datebases.csv"
@@ -363,20 +387,32 @@ int database::delEntry(string tableName, int columnNumber, string columnText)
 
     tableTempFile.close();
 
+
+
+    //Путь к начальному и конечному файлу (.csv => .tmp => .csv)
     string newstr = selectedDB + "/" + tableName;
     newstr += ".csv";
+
+
+    //Промежуточный (временный) файл
     string oldstr = selectedDB + "/" + tableName;
     oldstr += ".tmp";
 
     //Удаляем файл таблицы
     if(remove(newstr.c_str()) != 0)
+    {
         addLog("Error removing file (" + newstr + "): " + strerror(errno), 2);
+        return -3;
+    }
     else
         addLog("Successful file remove (" + newstr + ")", 0);
 
     //Переименовываем временный файл в файл таблицы
     if(rename(oldstr.c_str(), newstr.c_str()) != 0)
+    {
         addLog("Error rename file (" + oldstr + "): " + strerror(errno), 2);
+        return -4;
+    }
     else
         addLog("Successful file rename (" + oldstr + ")", 0);
 
