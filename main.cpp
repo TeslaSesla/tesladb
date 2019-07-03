@@ -46,7 +46,7 @@ int main()
                 getline(cin, temp1);
                 cout << "Enter table types: ";
                 getline(cin, temp2);
-                cout << "Enter index column: ";
+                cout << "Enter increment column[0 - none]: ";
                 getline(cin, temp3);
                 cout << db.createTable(temp, temp1, temp2, stoi(temp3)) << endl;
                 break;

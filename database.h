@@ -53,13 +53,13 @@ class database
 
         //База данных
         int createDB(string);   //Создание БД
-        int deleteDB(string);   //Удаление БД
+        int delDB   (string);   //Удаление БД
         int selectDB(string);   //Выбор ранее созданной базы данных
 
 
         //Работа с таблицей
         int createTable (string, string, string, int = 0);   //Создание таблицы в выбранной БД
-        int deleteTable (string);                            //Удаление таблицы в выбранной БД
+        int delTable    (string);                            //Удаление таблицы в выбранной БД
         int getLastLine (string, string&);                   //Возвращает последнюю найденную строку
         int addEntry    (string, string);                    //Добавление записи в таблицу
         int delEntry    (string, int,    string);            //Удаление одной записи из таблицы
@@ -97,8 +97,8 @@ class database
         int addTableToList(string);     //Добавить таблицу в список таблиц
         int addDBToList(string);        //Добавить базу данных в список баз данных
 
-        int getTableTypes(string, string&); //Возвращает типы указанной таблицы
-        int getIndexColumn(string, int&);   //Возвращает индексный столбик
+        int getTableTypes(string, string&);     //Возвращает типы указанной таблицы
+        int getIncrementColumn(string, int&);   //Возвращает индексный столбик
 
         string selectedDB = "NONE";  //Выбранная база данных
 

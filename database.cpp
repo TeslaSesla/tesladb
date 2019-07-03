@@ -149,7 +149,7 @@ int database::createDB(string name)
     return 0;
 }
 
-int database::createTable(string name, string strNames, string strTypes, int indexColumnNumber)
+int database::createTable(string name, string strNames, string strTypes, int incrementColumnNumber)
 {
     addLog("Creating table " + name, 0);
 
@@ -188,9 +188,9 @@ int database::createTable(string name, string strNames, string strTypes, int ind
     ofstream tableOptionsFile;
     try
     {
-        tableOptionsFile.open(selectedDB + "/" + name + "_options.csv");            //Открываем файл конфигураций таблицы
-        tableOptionsFile << "option, value" << endl;                                //Устанавливаем структуру файла конфигураций
-        tableOptionsFile << "indexColumnNumber, " << indexColumnNumber << endl;     //Устанавливаем настройку "Индексный столбец"
+        tableOptionsFile.open(selectedDB + "/" + name + "_options.csv");                //Открываем файл конфигураций таблицы
+        tableOptionsFile << "option, value" << endl;                                    //Устанавливаем структуру файла конфигураций
+        tableOptionsFile << "incrementColumnNumber, " << incrementColumnNumber << endl; //Устанавливаем настройку "Столбец типа AUTO_INCREMENT"
     }
     catch (...)
     {
@@ -224,15 +224,15 @@ int database::createTable(string name, string strNames, string strTypes, int ind
     return 0;
 }
 
-int database::getIndexColumn(string tableName, int & columnNumber)
+int database::getIncrementColumn(string tableName, int & columnNumber)
 {
-    addLog("Looking for option indexColumnNumber (" + tableName + "_options.csv)", 0);
+    addLog("Looking for option incrementColumnNumber (" + tableName + "_options.csv)", 0);
 
-    //Ищем параметр indexColumnNumber
+    //Ищем параметр incrementColumnNumber
     io::CSVReader<2> in(selectedDB + "/" + tableName + "_options.csv");
     in.read_header(io::ignore_missing_column, "option", "value");
 
-    string searchStr = "indexColumnNumber"; //Строка которую нужно найти
+    string searchStr = "incrementColumnNumber"; //Строка которую нужно найти
     string SEARCH_option; int SEARCH_value; //Переменные для поиска
 
     //Перебор таблицы со списком БД
@@ -244,7 +244,7 @@ int database::getIndexColumn(string tableName, int & columnNumber)
             return 0;
         }
     }
-    addLog("Option indexColumnNumber not founded", 1);
+    addLog("Option incrementColumnNumber not founded", 1);
     return -1;
 }
 
@@ -276,10 +276,10 @@ int database::addEntry(string name, string data)
         return -2;
     }
 
-    int indexColumn = 0;
-    getIndexColumn(name, indexColumn);
+    int incrementColumn = 0;
+    getIncrementColumn(name, incrementColumn);
 
-    if (indexColumn == 0)
+    if (incrementColumn == 0)
     {
         //Индексный столбик отстутствует - просто добавляем запись
         tableFile << data << endl;
@@ -288,11 +288,11 @@ int database::addEntry(string name, string data)
     {
         vector<string> arr;     //Вектор для разделения строки
         string lastLine;        //Последняя строка
-        int lastIndex = 0;      //Последний индекс
-        string lastIndexTemp;   //Индекс последней найденной записи
+        int lastincrement = 0;      //Последний индекс
+        string lastIncrementTemp;   //Индекс последней найденной записи
 
         vector<string> dataarr; //Выходной вектор для объеденения индекса и записи
-        int indexToInsert = 0;  //Индекс который будет добавлен в новую запись
+        int incrementToInsert = 0;  //Индекс который будет добавлен в новую запись
         string outStr = "";     //Выходная строка
 
 
@@ -301,16 +301,16 @@ int database::addEntry(string name, string data)
         {
             strCut(lastLine, arr);  //Разделяем последнюю строку
 
-            lastIndexTemp = arr[indexColumn - 1];
-            lastIndex = stoi(lastIndexTemp); //Получаем последний индекс
+            lastIncrementTemp = arr[incrementColumn - 1];
+            lastincrement = stoi(lastIncrementTemp); //Получаем последний индекс
 
-            indexToInsert = lastIndex + 1;  //Индекс новой строки
+            incrementToInsert = lastincrement + 1;  //Индекс новой строки
 
         }
 
 
         strCut(data, dataarr);  //Разделяем исходную строку
-        dataarr.insert(dataarr.begin() + indexColumn - 1, to_string(indexToInsert));
+        dataarr.insert(dataarr.begin() + incrementColumn - 1, to_string(incrementToInsert));
 
 
         for (int i = 0; i < dataarr.size(); i++)
@@ -418,6 +418,11 @@ int database::delEntry(string tableName, int columnNumber, string columnText)
 
 
     return 0;
+}
+
+int database::delDB(string databaseName)
+{
+
 }
 
 int database::getLineInTableByRow(string tableName, int columnNumber, string columnData, string & strOut, string & typeNames)
@@ -631,7 +636,7 @@ int database::addTableToList(string name)
     try
     {
         //Чтение таблиц
-        addLog("Reading tables indexes", 0);
+        addLog("Reading tables incrementes", 0);
 
         //Проходим по всему файлу
         io::CSVReader<3>in(TABLES_LIST_FILE);
