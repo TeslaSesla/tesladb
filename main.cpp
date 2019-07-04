@@ -1,7 +1,6 @@
 #include <iostream>
 #include <string>
 #include <string.h>
-#include <asm/boot.h>
 
 #include "database.h"
 
@@ -26,6 +25,7 @@ int main()
         cout << "6) Delete entry"       << endl;
         cout << "7) Search row"         << endl;
         cout << "8) Search row array"   << endl;
+        cout << "9) Delete DB"          << endl;
         getline(cin, temp);
         ans = stoi(temp);
 
@@ -96,6 +96,13 @@ int main()
                     cout << i << ") " << temparr[i] << endl;
                 }
                 cout << "Types: " << temp2 << endl;
+                break;
+            case 9:
+                cout << "Enter database name: ";
+                getline(cin, temp1);
+                db.delDB(temp1);
+                break;
+
         }
     }
     while(ans != 1);
