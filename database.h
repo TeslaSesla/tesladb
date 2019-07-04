@@ -34,6 +34,7 @@
 #include <cerrno>
 
 #include <sys/stat.h>
+#include <boost/filesystem.hpp>
 
 #include "CSVread/csv.h"
 
@@ -99,6 +100,9 @@ class database
 
         int getTableTypes(string, string&);     //Возвращает типы указанной таблицы
         int getIncrementColumn(string, int&);   //Возвращает индексный столбик
+
+        // TODO (nikolay#5#): Сделать функцию удаления базы данных из списка баз данных
+        // TODO (nikolay#5#): Сделать функцию удаления всех таблиц определённой базы данных из списка таблиц
 
         string selectedDB = "NONE";  //Выбранная база данных
 
