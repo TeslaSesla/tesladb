@@ -334,12 +334,16 @@ int database::getLastLine(string tableName, string & strOut)
     int it = 0;
 
     addLog("Searching last line in table " + tableName);
-    io::LineReader in2(selectedDB + "/" + tableName + ".csv");
-    while(char*line = in2.next_line())
+
+    io::CSVReader<2> in(DB_LIST_FILE);
+    in.read_header(io::ignore_missing_column, "ID", "name");
+    int SEARCH_id; string SEARCH_name;
+    while(in.read_row(SEARCH_id, SEARCH_name))
     {
-        strOut = line;
-        it++;
+
     }
+
+
     if (it < 2)
     {
         addLog("Founded file have only 1 line", 1);
@@ -423,6 +427,41 @@ int database::delEntry(string tableName, int columnNumber, string columnText)
 int database::delDB(string databaseName)
 {
 
+    ofstream databasesTempFile;
+    databasesTempFile.open("dbFiles/databases.tmp", ios::app);
+    if (!databasesTempFile)
+    {
+        addLog("Can't create databases.csv temp file", 2);
+        return -2;
+    }
+
+    addLog("Moving databases to temp file");
+
+    databasesTempFile << "ID, name" << endl;
+    io::CSVReader<2> in(DB_LIST_FILE);
+    in.read_header(io::ignore_missing_column, "ID", "name");
+    int SEARCH_id; string SEARCH_name;
+    while(in.read_row(SEARCH_id, SEARCH_name))
+    {
+        if (databaseName != SEARCH_name)
+        {
+            databasesTempFile << SEARCH_id << ", " << SEARCH_name << endl;
+        }
+    }
+    databasesTempFile.close();
+
+    boost::filesystem::remove(DB_LIST_FILE);
+    boost::filesystem::rename("dbFiles/databases.tmp", DB_LIST_FILE);
+
+    //Удаляем папку с базой данных
+    if (boost::filesystem::remove_all(databaseName) == 1)
+    {
+        addLog("Database directory successful deleted");
+    }
+    else
+    {
+        addLog("Can't delete database directory", 1);
+    }
 }
 
 int database::getLineInTableByRow(string tableName, int columnNumber, string columnData, string & strOut, string & typeNames)
