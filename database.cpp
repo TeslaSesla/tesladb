@@ -44,53 +44,42 @@ database::database()
 
 int database::createSystemDir()
 {
-    int status;
-    status = mkdir("dbFiles", S_IRWXU);
-
     //Если директория была только что создана
-    if (status == 0)
+    if (boost::filesystem::create_directory("dbFiles") == 1)
     {
         //Директория была только что создана, создаём файлы
         ofstream logFile;
         logFile.open(LOG_FILE);
         logFile.close();
-        addLog("Log file created.", 0);
+        addLog("Log file created", 0);
 
-        addLog("System dir created.", 0);
+        addLog("System dir created", 0);
 
         ofstream tablesFile;
         tablesFile.open(TABLES_LIST_FILE);
         tablesFile << "ID, dbname, name" << endl;
-        addLog("Tables file created.", 0);
+        addLog("Tables file created", 0);
         tablesFile.close();
 
         ofstream dbFile;
         dbFile.open(DB_LIST_FILE);
         dbFile << "ID, name" << endl;
-        addLog("Database file created.", 0);
+        addLog("Database file created", 0);
         dbFile.close();
 
         ofstream optionsFile;
         optionsFile.open(OPTIONS_FILE);
         optionsFile << "option, value" << endl;
         optionsFile << "enableLog, 1" << endl;
-        addLog("Options file created.", 0);
+        addLog("Options file created", 0);
         optionsFile.close();
 
         return 0;
     }
-    else if (status == -1)
-    {
-        if (!enableLog)
-            addLog("System dir already created", 0);
-        return -1;
-    }
 
-
-    //Что-то пошло не так, ветвление не выполнилось
-    string errorOut = strerror(errno);
-    addLog("Something went wrong when creating a system directory " + errorOut, 2);
-    return status;
+    //Ветвление не выполнилось, директория уже существует
+    addLog("Directory already created", 0);
+    return -1;
 }
 
 int database::createDB(string name)
@@ -392,33 +381,15 @@ int database::delEntry(string tableName, int columnNumber, string columnText)
     tableTempFile.close();
 
 
-
-    //Путь к начальному и конечному файлу (.csv => .tmp => .csv)
-    string newstr = selectedDB + "/" + tableName;
-    newstr += ".csv";
-
-
-    //Промежуточный (временный) файл
-    string oldstr = selectedDB + "/" + tableName;
-    oldstr += ".tmp";
-
-    //Удаляем файл таблицы
-    if(remove(newstr.c_str()) != 0)
-    {
-        addLog("Error removing file (" + newstr + "): " + strerror(errno), 2);
-        return -3;
-    }
+    if (boost::filesystem::remove(selectedDB + "/" + tableName + ".csv") == 1)
+        addLog("Successful file remove");
     else
-        addLog("Successful file remove (" + newstr + ")", 0);
-
-    //Переименовываем временный файл в файл таблицы
-    if(rename(oldstr.c_str(), newstr.c_str()) != 0)
     {
-        addLog("Error rename file (" + oldstr + "): " + strerror(errno), 2);
-        return -4;
+        addLog("Can't delete file", 2);
     }
-    else
-        addLog("Successful file rename (" + oldstr + ")", 0);
+
+    boost::filesystem::rename(selectedDB + "/" + tableName + ".tmp", selectedDB + "/" + tableName + ".csv");
+
 
 
     return 0;
