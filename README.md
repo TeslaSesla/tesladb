@@ -8,7 +8,7 @@
 
 ## Используемые библиотеки
 [Fast C++ CSV Parser](https://github.com/ben-strasser/fast-cpp-csv-parser) - CSV parser library by ben-strasser <br />
-[Boost] (https://www.boost.org/) <br>
+[Boost] (https://www.boost.org) <br>
 
 
 <hr>
