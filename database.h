@@ -53,56 +53,63 @@ class database
         virtual ~database();
 
         //База данных
-        int createDB(string);   //Создание БД
-        int delDB   (string);   //Удаление БД
-        int selectDB(string);   //Выбор ранее созданной базы данных
+        int createDB(string); //Создание БД
+        int delDB   (string); //Удаление БД
+        int selectDB(string); //Выбор ранее созданной базы данных
 
 
         //Работа с таблицей
-        int createTable (string, string, string, int = 0);   //Создание таблицы в выбранной БД
-        int delTable    (string);                            //Удаление таблицы в выбранной БД
-        int getLastLine (string, string&);                   //Возвращает последнюю найденную строку
-        int addEntry    (string, string);                    //Добавление записи в таблицу
-        int delEntry    (string, int,    string);            //Удаление одной записи из таблицы
-        int delAllEntry (string, int,    string);            //Удаление всех записей из таблицы
-        int delLastEntry(string, int);                       //Удаление X последних записей из таблицы
+        int createTable      (string, string, string, int = 0); //Создание таблицы в выбранной БД
+        int delTable         (string);                          //Удаление таблицы в выбранной БД
+        int getLastTableLine (string, string&);                 //Возвращает последнюю найденную строку в таблице
+        int getLastTableEntry(string, string&);                 //Возвращает последнюю найденную запись в таблице
+        int addEntry         (string, string);                  //Добавление записи в таблицу
+        int delEntry         (string, int,    string);          //Удаление одной записи из таблицы
+        int delAllEntry      (string, int,    string);          //Удаление всех записей из таблицы
+        int delLastEntry     (string, int);                     //Удаление X последних записей из таблицы
 
         //Поиск строк
-        int getLineInTableByRow(string, int, string, string &,        string &);    //Поиск первого подходящего элемента по содержанию и возврат элементов в векторе
-        int getArrInTableByRow (string, int, string, vector<string>&, string &);    //Поиск всех подходящих элементов по содержанию
+        int getLineInTableByRow(string, int, string, string &,        string &); //Поиск первого подходящего элемента по содержанию и возврат элементов в векторе
+        int getArrInTableByRow (string, int, string, vector<string>&, string &); //Поиск всех подходящих элементов по содержанию
 
 
         //Проверка наличия
-        int checkTableAvlb(string);     //Проверить наличие таблицы
-        int checkDBAvlb(string);        //Проверить наличие базы данных
+        int checkTableAvlb(string, string = "NOT_SELECTED");    //Проверить наличие таблицы     УДАЛИТЬ ДАННУЮ ФУНКЦИЮ
+        int checkDBAvlb   (string);                             //Проверить наличие базы данных УДАЛИТЬ ДАННУЮ ФУНКЦИЮ
+
+        int checkDbStatus   (string);   //Вернуть статус БД
+        int checkTableStatus(string);   //Вернуть статус таблицы
 
         //Система
-        int reloadConfigFile();   //Перезагрузить файл конфигураций
-        int createConfigFile();   //Создать файл конфигураций, старый будет удалён
+        int reloadConfigFile(); //Перезагрузить файл конфигураций
+        int createConfigFile(); //Создать файл конфигураций, старый будет удалён
 
-        int createSystemDir();    //Создать системную директорию (dbFiles)
+        int createSystemDir (); //Создать системную директорию (dbFiles)
         // 0 - создано
         //-1 - директория уже была создана
 
+        // TODO (nikolay#3#): Сделать функцию поиска и удаления временных файлов (.tmp)
 
-        int strCut(string, vector<string>&);    //Разделяет строку на вектор
+        int strCut(string, vector<string>&); //Разделяет строку на вектор
 
     protected:
 
     private:
 
         //Отладка и всё что с ней связано
-        int addLog(string, short int = 0);      //Создаём отчёт
+        int addLog(string, short int = 0); //Создаём отчёт
 
         //Добавление данных в списки
-        int addTableToList(string);     //Добавить таблицу в список таблиц
-        int addDBToList(string);        //Добавить базу данных в список баз данных
+        int addTableToList(string); //Добавить таблицу в список таблиц
+        int addDBToList   (string); //Добавить базу данных в список баз данных
 
-        int getTableTypes(string, string&);     //Возвращает типы указанной таблицы
-        int getIncrementColumn(string, int&);   //Возвращает индексный столбик
+        int getTableTypes     (string, string&); //Возвращает типы указанной таблицы
+        int getIncrementColumn(string, int&);    //Возвращает индексный столбик
 
-        // TODO (nikolay#5#): Сделать функцию удаления базы данных из списка баз данных
         // TODO (nikolay#5#): Сделать функцию удаления всех таблиц определённой базы данных из списка таблиц
+
+        int delDbFromList        (string); //Удалить БД из списка
+        int delTablesFromListByDb(string); //Удалить все таблицы из списка таблиц исходя из привязанной базы данных
 
         string selectedDB = "NONE";  //Выбранная база данных
 

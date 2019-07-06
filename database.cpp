@@ -45,7 +45,7 @@ database::database()
 int database::createSystemDir()
 {
     //Если директория была только что создана
-    if (boost::filesystem::create_directory("dbFiles") == 1)
+    if (boost::filesystem::create_directory("dbFiles") == true)
     {
         //Директория была только что создана, создаём файлы
         ofstream logFile;
@@ -275,6 +275,8 @@ int database::addEntry(string name, string data)
     }
     else
     {
+        // TODO (nikolay#9#): Ошибка: столбец с автоматическим подсчётом числа всегда 0
+
         vector<string> arr;     //Вектор для разделения строки
         string lastLine;        //Последняя строка
         int lastincrement = 0;      //Последний индекс
@@ -286,7 +288,7 @@ int database::addEntry(string name, string data)
 
 
         //Если это не первая строка
-        if (getLastLine(name, lastLine) == 0)
+        if (getLastTableLine(name, lastLine) == 0)
         {
             strCut(lastLine, arr);  //Разделяем последнюю строку
 
@@ -318,20 +320,17 @@ int database::addEntry(string name, string data)
     return 0;
 }
 
-int database::getLastLine(string tableName, string & strOut)
+int database::getLastTableLine(string tableName, string & strOut)
 {
+    addLog("Searching last line in table " + tableName, 0);
+
+    io::LineReader in2(selectedDB + "/" + tableName + ".csv");
     int it = 0;
-
-    addLog("Searching last line in table " + tableName);
-
-    io::CSVReader<2> in(DB_LIST_FILE);
-    in.read_header(io::ignore_missing_column, "ID", "name");
-    int SEARCH_id; string SEARCH_name;
-    while(in.read_row(SEARCH_id, SEARCH_name))
+    while(char*line = in2.next_line())
     {
-
+        strOut = line;
+        it++;
     }
-
 
     if (it < 2)
     {
@@ -339,7 +338,13 @@ int database::getLastLine(string tableName, string & strOut)
         return -2;  //В файле только 1 строка
     }
 
+    addLog("Founded " + to_string(it) + "lines");
     return 0;
+}
+
+int database::getLastTableEntry(string tableName, string & strOut)
+{
+    // TODO (nikolay#3#): Дописать функцию получения последней записи из таблицы
 }
 
 int database::delEntry(string tableName, int columnNumber, string columnText)
@@ -362,7 +367,7 @@ int database::delEntry(string tableName, int columnNumber, string columnText)
     //Инициализируем временные переменные
     string str;                 //Строка при переборе файла
     vector<string> arr;         //Вектор для разделения строки
-    bool founded = false;
+    bool isFounded = false;
 
 
     io::LineReader in(selectedDB + "/" + tableName + ".csv");
@@ -372,10 +377,10 @@ int database::delEntry(string tableName, int columnNumber, string columnText)
         strCut(str, arr);   //Разделяем строку и помещаем в вектор
 
         //Если строка не подходит по критерию ИЛИ уже найдена подходящая строка ТО добавляем строку в новый файл
-        if (arr[columnNumber-1] != columnText || founded == true)
+        if (arr[columnNumber-1] != columnText || isFounded == true)
             tableTempFile << str << endl;
         else
-            founded = true;
+            isFounded = true;
     }
 
     tableTempFile.close();
@@ -395,9 +400,28 @@ int database::delEntry(string tableName, int columnNumber, string columnText)
     return 0;
 }
 
-int database::delDB(string databaseName)
+int database::delDB(string dbName)
 {
 
+    delDbFromList(dbName);
+
+    delTablesFromListByDb(dbName);
+    // TODO (nikolay#8#): Добавить функцию удаления всех таблиц из списка таблиц, связанных с базой данных
+
+
+
+    //Удаляем папку с базой данных
+    if (boost::filesystem::remove_all(dbName) == 1)
+        addLog("Database directory successful deleted");
+    else
+        addLog("Can't delete database directory", 1);
+
+    return 0;
+}
+
+int database::delDbFromList(string dbName)
+{
+    addLog("Removing database from list...");
     ofstream databasesTempFile;
     databasesTempFile.open("dbFiles/databases.tmp", ios::app);
     if (!databasesTempFile)
@@ -414,7 +438,7 @@ int database::delDB(string databaseName)
     int SEARCH_id; string SEARCH_name;
     while(in.read_row(SEARCH_id, SEARCH_name))
     {
-        if (databaseName != SEARCH_name)
+        if (dbName != SEARCH_name)
         {
             databasesTempFile << SEARCH_id << ", " << SEARCH_name << endl;
         }
@@ -424,15 +448,40 @@ int database::delDB(string databaseName)
     boost::filesystem::remove(DB_LIST_FILE);
     boost::filesystem::rename("dbFiles/databases.tmp", DB_LIST_FILE);
 
-    //Удаляем папку с базой данных
-    if (boost::filesystem::remove_all(databaseName) == 1)
+    addLog("Database successful removed from list");
+
+    return 0;
+}
+
+int database::delTablesFromListByDb(string dbName)
+{
+    addLog("Removing database from list...");
+    ofstream tablesTempFile;
+    tablesTempFile.open("dbFiles/tables.tmp", ios::app);
+    if (!tablesTempFile)
     {
-        addLog("Database directory successful deleted");
+        addLog("Can't create tables.csv temp file", 2);
+        return -2;
     }
-    else
+
+    addLog("Moving tables to temp file");
+
+    tablesTempFile << "ID, dbname, name" << endl;
+    io::CSVReader<3> in(TABLES_LIST_FILE);
+    in.read_header(io::ignore_missing_column, "ID", "dbname", "name");
+    int SEARCH_id; string SEARCH_dbname, SEARCH_name;
+    while(in.read_row(SEARCH_id, SEARCH_dbname, SEARCH_name))
     {
-        addLog("Can't delete database directory", 1);
+        //Если имя базы данных (таблицы которой нужно удалить) не совпадает с именем найденной базы данных - записываем
+        if (dbName != SEARCH_dbname)
+            tablesTempFile << SEARCH_id << ", " << SEARCH_dbname << ", " << SEARCH_name << endl;
     }
+    tablesTempFile.close();
+
+    boost::filesystem::remove(TABLES_LIST_FILE);
+    boost::filesystem::rename("dbFiles/tables.tmp", TABLES_LIST_FILE);
+
+    return 0;
 }
 
 int database::getLineInTableByRow(string tableName, int columnNumber, string columnData, string & strOut, string & typeNames)
@@ -524,10 +573,21 @@ int database::getTableTypes(string tableName, string & typeOut)
     return -1;
 }
 
-int database::checkTableAvlb(string name)
+int database::checkTableAvlb(string tableName, string dbName)
 {
     //Проверяем наличие таблицы в файле таблиц
-    addLog("Checking the availability of the table " + name + " in table's list (tables.csv)", 0);
+    addLog("Checking the availability of the table " + tableName + " in table's list (tables.csv)", 0);
+
+    if (dbName == "NOT_SELECTED")
+    {
+        if (selectedDB == "NONE")
+        {
+            addLog("No database selected", 2);
+            return -1;
+        }
+        else
+            dbName = selectedDB;
+    }
 
     try
     {
@@ -540,7 +600,7 @@ int database::checkTableAvlb(string name)
 
         while(in.read_row(SEARCH_id, SEARCH_dbname, SEARCH_name))
         {
-            if (name == SEARCH_name)
+            if (tableName == SEARCH_name && dbName == SEARCH_dbname)
             {
                 addLog("Founded table with same name", 0);
                 return -1;
@@ -553,7 +613,7 @@ int database::checkTableAvlb(string name)
         return -2;
     }
 
-    addLog("Table with name " + name + " not founded", 0);
+    addLog("Table with name " + tableName + " not founded", 0);
     return 0;
 }
 
