@@ -77,8 +77,13 @@ class database
         int checkTableAvlb(string, string = "NOT_SELECTED");    //Проверить наличие таблицы     УДАЛИТЬ ДАННУЮ ФУНКЦИЮ
         int checkDBAvlb   (string);                             //Проверить наличие базы данных УДАЛИТЬ ДАННУЮ ФУНКЦИЮ
 
-        int checkDbStatus   (string);   //Вернуть статус БД
-        int checkTableStatus(string);   //Вернуть статус таблицы
+        //Проверка БД/таблицы
+        int checkDbStatus       (string);   //Вернуть статус БД
+        int checkTableStatus    (string);   //Вернуть статус таблицы
+        int checkSystemDirStatus();         //Вернуть статус системной директорииы
+
+        int fixDb   (string);   //Починить БД
+        int fixTable(string);   //Починить таблицу
 
         //Система
         int reloadConfigFile(); //Перезагрузить файл конфигураций
@@ -106,12 +111,11 @@ class database
         int getTableTypes     (string, string&); //Возвращает типы указанной таблицы
         int getIncrementColumn(string, int&);    //Возвращает индексный столбик
 
-        // TODO (nikolay#5#): Сделать функцию удаления всех таблиц определённой базы данных из списка таблиц
-
+        //Удаление всего что связано с БД
         int delDbFromList        (string); //Удалить БД из списка
         int delTablesFromListByDb(string); //Удалить все таблицы из списка таблиц исходя из привязанной базы данных
 
-        string selectedDB = "NONE";  //Выбранная база данных
+        string selectedDb_ = "NONE";  //Выбранная база данных
 
         //Загруженные параметры
         bool enableLog = true;

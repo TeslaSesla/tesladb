@@ -10,6 +10,8 @@ int main()
 {
     database db;
 
+    //cout << __func__ << endl;
+
     int ans = 0;
     int tempint = 0;
     string temp, temp1, temp2, temp3, temp4;

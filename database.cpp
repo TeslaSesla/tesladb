@@ -147,7 +147,7 @@ int database::createTable(string name, string strNames, string strTypes, int inc
 
 
     //Если не выбрана база данных
-    if (selectedDB == "NONE")
+    if (selectedDb_ == "NONE")
     {
         addLog("No database selected", 2);
         return -5;
@@ -159,7 +159,7 @@ int database::createTable(string name, string strNames, string strTypes, int inc
     ofstream tableFileConfig;
     try
     {
-        tableFileConfig.open(selectedDB + "/" + name + ".str");
+        tableFileConfig.open(selectedDb_ + "/" + name + ".str");
         tableFileConfig << strNames << endl;    //Записываем структуру имён (названия столбиков)
         tableFileConfig << strTypes << endl;    //Записываем структуру типов данных
     }
@@ -177,7 +177,7 @@ int database::createTable(string name, string strNames, string strTypes, int inc
     ofstream tableOptionsFile;
     try
     {
-        tableOptionsFile.open(selectedDB + "/" + name + "_options.csv");                //Открываем файл конфигураций таблицы
+        tableOptionsFile.open(selectedDb_ + "/" + name + "_options.csv");                //Открываем файл конфигураций таблицы
         tableOptionsFile << "option, value" << endl;                                    //Устанавливаем структуру файла конфигураций
         tableOptionsFile << "incrementColumnNumber, " << incrementColumnNumber << endl; //Устанавливаем настройку "Столбец типа AUTO_INCREMENT"
     }
@@ -195,7 +195,7 @@ int database::createTable(string name, string strNames, string strTypes, int inc
     ofstream tableFile;
     try
     {
-        tableFile.open(selectedDB + "/" + name + ".csv");
+        tableFile.open(selectedDb_ + "/" + name + ".csv");
         tableFile << strNames << endl;  //Записываем названия столбиков
     }
     catch (...)
@@ -218,7 +218,7 @@ int database::getIncrementColumn(string tableName, int & columnNumber)
     addLog("Looking for option incrementColumnNumber (" + tableName + "_options.csv)", 0);
 
     //Ищем параметр incrementColumnNumber
-    io::CSVReader<2> in(selectedDB + "/" + tableName + "_options.csv");
+    io::CSVReader<2> in(selectedDb_ + "/" + tableName + "_options.csv");
     in.read_header(io::ignore_missing_column, "option", "value");
 
     string searchStr = "incrementColumnNumber"; //Строка которую нужно найти
@@ -256,7 +256,7 @@ int database::addEntry(string name, string data)
     //Сделать проверку на открытие файла
     addLog("Opening table file (" +  name + ".csv)", 0);
     ofstream tableFile;
-    tableFile.open(selectedDB + "/" + name + ".csv", ios::app);
+    tableFile.open(selectedDb_ + "/" + name + ".csv", ios::app);
     if (tableFile)
         addLog("Table file opened", 0);
     else
@@ -275,7 +275,6 @@ int database::addEntry(string name, string data)
     }
     else
     {
-        // TODO (nikolay#9#): Ошибка: столбец с автоматическим подсчётом числа всегда 0
 
         vector<string> arr;     //Вектор для разделения строки
         string lastLine;        //Последняя строка
@@ -324,7 +323,7 @@ int database::getLastTableLine(string tableName, string & strOut)
 {
     addLog("Searching last line in table " + tableName, 0);
 
-    io::LineReader in2(selectedDB + "/" + tableName + ".csv");
+    io::LineReader in2(selectedDb_ + "/" + tableName + ".csv");
     int it = 0;
     while(char*line = in2.next_line())
     {
@@ -354,7 +353,7 @@ int database::delEntry(string tableName, int columnNumber, string columnText)
     addLog("Creating temp table file (" + tableName + ".tmp)");
 
     ofstream tableTempFile;
-    tableTempFile.open(selectedDB + "/" + tableName + ".tmp", ios::app);
+    tableTempFile.open(selectedDb_ + "/" + tableName + ".tmp", ios::app);
     if (!tableTempFile)
     {
         addLog("Can't create table temp file", 2);
@@ -370,7 +369,7 @@ int database::delEntry(string tableName, int columnNumber, string columnText)
     bool isFounded = false;
 
 
-    io::LineReader in(selectedDB + "/" + tableName + ".csv");
+    io::LineReader in(selectedDb_ + "/" + tableName + ".csv");
     while(char*line = in.next_line())
     {
         str = line;         //Обновляем текущую строку
@@ -386,14 +385,14 @@ int database::delEntry(string tableName, int columnNumber, string columnText)
     tableTempFile.close();
 
 
-    if (boost::filesystem::remove(selectedDB + "/" + tableName + ".csv") == 1)
+    if (boost::filesystem::remove(selectedDb_ + "/" + tableName + ".csv") == 1)
         addLog("Successful file remove");
     else
     {
         addLog("Can't delete file", 2);
     }
 
-    boost::filesystem::rename(selectedDB + "/" + tableName + ".tmp", selectedDB + "/" + tableName + ".csv");
+    boost::filesystem::rename(selectedDb_ + "/" + tableName + ".tmp", selectedDb_ + "/" + tableName + ".csv");
 
 
 
@@ -406,7 +405,6 @@ int database::delDB(string dbName)
     delDbFromList(dbName);
 
     delTablesFromListByDb(dbName);
-    // TODO (nikolay#8#): Добавить функцию удаления всех таблиц из списка таблиц, связанных с базой данных
 
 
 
@@ -497,7 +495,7 @@ int database::getLineInTableByRow(string tableName, int columnNumber, string col
     int strCount = 0;       //Кол-во строк найденных в файле
 
 
-    io::LineReader in2(selectedDB + "/" + tableName + ".csv");
+    io::LineReader in2(selectedDb_ + "/" + tableName + ".csv");
     while(char*line = in2.next_line())
     {
         strCount++;
@@ -534,7 +532,7 @@ int database::getArrInTableByRow(string tableName, int columnNumber, string colu
     int strFounded = 0;     //Найденных строк
 
 
-    io::LineReader in2(selectedDB + "/" + tableName + ".csv");
+    io::LineReader in2(selectedDb_ + "/" + tableName + ".csv");
     while(char*line = in2.next_line())
     {
         strCount++;
@@ -560,7 +558,7 @@ int database::getTableTypes(string tableName, string & typeOut)
 {
     //Добавить проверку на нарушение целостности
     int it = 0;
-    io::LineReader in(selectedDB + "/" + tableName + ".str");
+    io::LineReader in(selectedDb_ + "/" + tableName + ".str");
     while(char*line = in.next_line())
     {
         it++;
@@ -580,13 +578,13 @@ int database::checkTableAvlb(string tableName, string dbName)
 
     if (dbName == "NOT_SELECTED")
     {
-        if (selectedDB == "NONE")
+        if (selectedDb_ == "NONE")
         {
             addLog("No database selected", 2);
             return -1;
         }
         else
-            dbName = selectedDB;
+            dbName = selectedDb_;
     }
 
     try
@@ -641,6 +639,100 @@ int database::checkDBAvlb(string name)
         return -2;
     }
     addLog("Database with name " + name + " not founded", 0);
+    return 0;
+}
+
+int database::checkSystemDirStatus()
+{
+
+    return 0;
+}
+
+int database::checkDbStatus(string dbName)
+{
+    addLog("Checking database status...");
+
+    if (dbName == "NONE" || dbName == "NOT_SELECTED" || dbName == "")
+    {
+        addLog("Selected banned or empty DB name", 2);
+    }
+
+    bool isDirCreated          = false; //Создана ли директория
+    bool isFounded             = false; //Найдена ли БД в списке БД
+    bool isMultipleDeclaration = false; //Присутствует ли множественное объявление БД в файле баз данных
+
+    //Ищем директорию базы данных
+    if (boost::filesystem::is_directory(dbName) == true)
+    {
+        addLog("Database directory: OK");
+        isDirCreated = true;
+    }
+    else
+    {
+        addLog("Database directory not founded");
+        isDirCreated = false;
+    }
+
+
+    //Если в системной директории всё нормас и все файлы присутствуют
+    if (checkSystemDirStatus() == 0)
+    {
+        ofstream dbFile;
+        dbFile.open(DB_LIST_FILE);
+        dbFile << "ID, name" << endl;
+        io::CSVReader<2> in(DB_LIST_FILE);
+        in.read_header(io::ignore_missing_column, "ID", "name");
+        int SEARCH_id; string SEARCH_name;
+        while(in.read_row(SEARCH_id, SEARCH_name))
+        {
+            if (dbName == SEARCH_name)
+            {
+                if (isFounded == true)
+                {
+                    addLog("Founded multiple database declaration (dbFiles/datebases.csv)");
+                    isMultipleDeclaration = true;
+                }
+                else
+                {
+                    addLog("Database avilable in list: OK");
+                    isFounded = true;
+                }
+
+            }
+        }
+    }
+    else
+    {
+        //Проблемы с системной директорией
+        return -5;
+    }
+
+
+    addLog("DB STATUS: isDirCreated=" + to_string(isDirCreated) + ", isFounded=" + to_string(isFounded) + ", isMultipleDeclaration=" + to_string(isMultipleDeclaration));
+
+    if (isDirCreated == false && isFounded == false)
+    {
+        addLog("Database not created");
+        return -1;
+    }
+    if (isDirCreated == false)
+    {
+        addLog("Dir not created");
+        return -2;
+    }
+    if (isFounded == false)
+    {
+        addLog("DB not founded in DB list");
+        return -3;
+    }
+    if (isMultipleDeclaration == true)
+    {
+        addLog("Founded multiple declaration of DB");
+        return -4;
+    }
+
+
+    //Проблем с БД не найдено
     return 0;
 }
 
@@ -732,10 +824,10 @@ int database::addTableToList(string name)
 
     if (it == 0)
         //Если это первая таблица в списке
-        tableListFile << it << ", " << selectedDB << ", " << name << endl;
+        tableListFile << it << ", " << selectedDb_ << ", " << name << endl;
     else
         //Если это не первая таблица в списке
-        tableListFile << lastTableId + 1 << ", " << selectedDB << ", " << name << endl;
+        tableListFile << lastTableId + 1 << ", " << selectedDb_ << ", " << name << endl;
 
 
     //Закрываем файл со списком таблиц
@@ -763,7 +855,7 @@ int database::addLog(string message, short int signal)
 
     ofstream logFile;
     logFile.open(LOG_FILE, std::ios::app);
-    if (logFile)    logFile << date << " [Database: " << selectedDB << "] - " << message;
+    if (logFile)    logFile << date << " [Database: " << selectedDb_ << "] - " << message;
         else return -1;
 
     switch (signal)
@@ -794,7 +886,7 @@ int database::selectDB(string name)
         addLog("Can't select database " + name, 1);
         return -1;
     }
-    selectedDB = name;
+    selectedDb_ = name;
     addLog("Database " + name + " selected", 0);
     return 0;
 }
