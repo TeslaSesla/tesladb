@@ -2,6 +2,8 @@
 #include <string>
 #include <string.h>
 
+#include <boost/timer/timer.hpp>
+
 #include "database.h"
 
 using namespace std;
@@ -9,6 +11,7 @@ using namespace std;
 int main()
 {
     database db;
+    boost::timer::cpu_timer timer;
 
     //cout << __func__ << endl;
 
@@ -28,6 +31,8 @@ int main()
         cout << "7) Search row"         << endl;
         cout << "8) Search row array"   << endl;
         cout << "9) Delete DB"          << endl;
+        cout << "10) Test write time"   << endl;
+        cout << "11) Check DB status"   << endl;
         getline(cin, temp);
         ans = stoi(temp);
 
@@ -93,7 +98,8 @@ int main()
                 getline(cin, temp3);
                 db.getArrInTableByRow(temp, stoi(temp4), temp3, temparr, temp2);
                 cout << "Lines: " << endl;
-                for (int i = 0; i < temparr.size(); i++)
+                tempint = temparr.size();
+                for (int i = 0; i < tempint; i++)
                 {
                     cout << i << ") " << temparr[i] << endl;
                 }
@@ -104,6 +110,25 @@ int main()
                 getline(cin, temp1);
                 db.delDB(temp1);
                 break;
+
+
+            case 10:
+
+                cout << "Testing 10000 entries to write" << endl;
+                timer.start();
+                for (int i = 0; i < 10000; i++)
+                    db.addEntry("table", "hello, 50");
+                timer.stop();
+                cout << timer.format() << endl;
+                break;
+
+            case 11:
+
+                cout << "Enter DB name: ";
+                getline(cin, temp1);
+                cout << db.checkDbStatus(temp1) << endl;
+                break;
+
 
         }
     }

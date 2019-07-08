@@ -117,6 +117,7 @@ int database::createDB(string name)
     //Создаём директорию
     int status;
     status = mkdir(name.c_str(), S_IRWXU);
+    // TODO (nikolay#2#): Создавать директорию через boost
 
     //Смотрим значение которое вернула mkdir
     if (status == 0)
@@ -303,10 +304,11 @@ int database::addEntry(string name, string data)
         dataarr.insert(dataarr.begin() + incrementColumn - 1, to_string(incrementToInsert));
 
 
-        for (int i = 0; i < dataarr.size(); i++)
+        int dataArrSize = dataarr.size();
+        for (int i = 0; i < dataArrSize; i++)
         {
             outStr += dataarr[i];
-            if (i != dataarr.size() - 1)
+            if (i != dataArrSize - 1)
                 outStr += ", ";
         }
 
@@ -344,6 +346,8 @@ int database::getLastTableLine(string tableName, string & strOut)
 int database::getLastTableEntry(string tableName, string & strOut)
 {
     // TODO (nikolay#3#): Дописать функцию получения последней записи из таблицы
+
+    return 0;
 }
 
 int database::delEntry(string tableName, int columnNumber, string columnText)
@@ -402,10 +406,11 @@ int database::delEntry(string tableName, int columnNumber, string columnText)
 int database::delDB(string dbName)
 {
 
-    delDbFromList(dbName);
+    if (delDbFromList(dbName) != 0)
+        return -1;
 
-    delTablesFromListByDb(dbName);
-
+    if (delTablesFromListByDb(dbName))
+        return -2;
 
 
     //Удаляем папку с базой данных
@@ -425,7 +430,7 @@ int database::delDbFromList(string dbName)
     if (!databasesTempFile)
     {
         addLog("Can't create databases.csv temp file", 2);
-        return -2;
+        return -1;
     }
 
     addLog("Moving databases to temp file");
@@ -459,7 +464,7 @@ int database::delTablesFromListByDb(string dbName)
     if (!tablesTempFile)
     {
         addLog("Can't create tables.csv temp file", 2);
-        return -2;
+        return -1;
     }
 
     addLog("Moving tables to temp file");
@@ -642,8 +647,71 @@ int database::checkDBAvlb(string name)
     return 0;
 }
 
+int database::checkFileStructure(string fileName, string fileStructure)
+{
+    int    it = 0;  //Счётчик итераций
+    string tmpStr;  //Временная строка
+
+    try
+    {
+        io::LineReader in2(fileName);
+        while(char*line = in2.next_line())
+        {
+            it++;
+            if (it == 1)
+            {
+                tmpStr = line;
+                if (fileStructure == tmpStr)
+                {
+                    return 0;
+                }
+                else
+                {
+                    return -2;
+                }
+            }
+        }
+    }
+    catch(...)
+    {
+        addLog("Cheking file structure error");
+    }
+
+    return -1;
+}
+
 int database::checkSystemDirStatus()
 {
+    addLog("Checking system directory");
+    if (boost::filesystem::is_directory("dbFiles") == false)
+    {
+        addLog("Can't find system directory");
+        return -1;
+    }
+
+    // TODO (nikolay#1#): Сделать проверку файла с логами
+
+
+    //Состояние структур файлов в системной директории
+    int  tablesListStatus    = checkFileStructure(TABLES_LIST_FILE, "ID, dbname, name");    //Статус файла таблиц
+    int  dbListStatus        = checkFileStructure(DB_LIST_FILE,     "ID, name");            //Статус файла баз данных
+    int  optionsListStatus   = checkFileStructure(OPTIONS_FILE,     "option, value");       //Статус файла параметров
+
+    if (tablesListStatus != 0)
+    {
+        addLog("Tables list structure error", 2);
+        return -2;
+    }
+    if (dbListStatus != 0)
+    {
+        addLog("Database list structure error", 2);
+        return -3;
+    }
+    if (optionsListStatus != 0)
+    {
+        addLog("Options list structure error", 2);
+        return -4;
+    }
 
     return 0;
 }
@@ -654,7 +722,8 @@ int database::checkDbStatus(string dbName)
 
     if (dbName == "NONE" || dbName == "NOT_SELECTED" || dbName == "")
     {
-        addLog("Selected banned or empty DB name", 2);
+        addLog("Selected banned or empty DB name", 1);
+        return -6;
     }
 
     bool isDirCreated          = false; //Создана ли директория
@@ -677,9 +746,6 @@ int database::checkDbStatus(string dbName)
     //Если в системной директории всё нормас и все файлы присутствуют
     if (checkSystemDirStatus() == 0)
     {
-        ofstream dbFile;
-        dbFile.open(DB_LIST_FILE);
-        dbFile << "ID, name" << endl;
         io::CSVReader<2> in(DB_LIST_FILE);
         in.read_header(io::ignore_missing_column, "ID", "name");
         int SEARCH_id; string SEARCH_name;
@@ -717,17 +783,17 @@ int database::checkDbStatus(string dbName)
     }
     if (isDirCreated == false)
     {
-        addLog("Dir not created");
+        addLog("Dir not created", 1);
         return -2;
     }
     if (isFounded == false)
     {
-        addLog("DB not founded in DB list");
+        addLog("DB not founded in DB list", 1);
         return -3;
     }
     if (isMultipleDeclaration == true)
     {
-        addLog("Founded multiple declaration of DB");
+        addLog("Founded multiple declaration of DB", 1);
         return -4;
     }
 
@@ -846,7 +912,7 @@ int database::addLog(string message, short int signal)
         2 - ERROR
     */
 
-    if (enableLog == false) return -2;
+    if (enableLog_ == false) return -2;
 
     time_t t = time(NULL);
     struct tm *tm = localtime(&t);
@@ -854,9 +920,11 @@ int database::addLog(string message, short int signal)
     strftime(date, sizeof(date), "[%d.%m.%C | %H:%M:%S]", tm);
 
     ofstream logFile;
-    logFile.open(LOG_FILE, std::ios::app);
-    if (logFile)    logFile << date << " [Database: " << selectedDb_ << "] - " << message;
-        else return -1;
+    logFile.open(LOG_FILE, ios::app);
+    if (logFile)
+        logFile << date << " [Database: " << selectedDb_ << "] - " << message;
+    else
+        return -1;
 
     switch (signal)
     {
@@ -904,10 +972,12 @@ int database::reloadConfigFile()
         {
             if (SEARCH_value == 0 || SEARCH_value == 1)
             {
-                enableLog = SEARCH_value;
+                enableLog_ = SEARCH_value;
             }
         }
     }
+
+    return 0;
 }
 
 database::~database()

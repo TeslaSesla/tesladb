@@ -108,6 +108,8 @@ class database
         int addTableToList(string); //Добавить таблицу в список таблиц
         int addDBToList   (string); //Добавить базу данных в список баз данных
 
+        int checkFileStructure(string, string); //Проверить структуру файла
+
         int getTableTypes     (string, string&); //Возвращает типы указанной таблицы
         int getIncrementColumn(string, int&);    //Возвращает индексный столбик
 
@@ -118,7 +120,7 @@ class database
         string selectedDb_ = "NONE";  //Выбранная база данных
 
         //Загруженные параметры
-        bool enableLog = true;
+        bool enableLog_ = true;
 
 };
 
