@@ -91,11 +91,12 @@ int database::createDB(string name)
     int SEARCH_id;          //Поиск БД: id
     string SEARCH_name;     //Поиск БД: имя БД
 
+
+    //Заменить на функцию checkBdStatus
+
     //Ищем индекс последней базы данных
     io::CSVReader<2>in(DB_LIST_FILE);
     in.read_header(io::ignore_missing_column, "ID", "name");
-
-    //Перебор таблицы со списком БД
     while(in.read_row(SEARCH_id, SEARCH_name))
     {
         if (name == SEARCH_name)
@@ -114,26 +115,15 @@ int database::createDB(string name)
     dbFile.close();
     addLog("Database added to list", 1);
 
-    //Создаём директорию
-    int status;
-    status = mkdir(name.c_str(), S_IRWXU);
-    // TODO (nikolay#2#): Создавать директорию через boost
 
-    //Смотрим значение которое вернула mkdir
-    if (status == 0)
+    //Создаём директорию
+    if (boost::filesystem::create_directory(name) == true)
         addLog("Database created!", 0);
-    else if (status == -1)
-    {
-        //Папка с названием базы данных уже существует
-        addLog("Can't create database directory, directory with this name already exists.", 2);
-        return -2;
-    }
     else
     {
-        //mkdir вернула неизвестное значение
-        string errOut = strerror(errno);
-        addLog("Can't create database directory (mkdir returned value " + to_string(status) + ")\n" + errOut, 2);
-        return -3;
+        //Папка с названием базы данных уже существует
+        addLog("Can't create database directory", 2);
+        return -2;
     }
 
     return 0;
