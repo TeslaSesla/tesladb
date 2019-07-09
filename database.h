@@ -62,7 +62,6 @@ class database
         int createTable      (string, string, string, int = 0); //Создание таблицы в выбранной БД
         int delTable         (string);                          //Удаление таблицы в выбранной БД
         int getLastTableLine (string, string&);                 //Возвращает последнюю найденную строку в таблице
-        int getLastTableEntry(string, string&);                 //Возвращает последнюю найденную запись в таблице
         int addEntry         (string, string);                  //Добавление записи в таблицу
         int delEntry         (string, int,    string);          //Удаление одной записи из таблицы
         int delAllEntry      (string, int,    string);          //Удаление всех записей из таблицы
@@ -77,10 +76,16 @@ class database
         int checkTableAvlb(string, string = "NOT_SELECTED");    //Проверить наличие таблицы     УДАЛИТЬ ДАННУЮ ФУНКЦИЮ
         int checkDBAvlb   (string);                             //Проверить наличие базы данных УДАЛИТЬ ДАННУЮ ФУНКЦИЮ
 
+        // TODO (nikolay#1#): Сделать функцию проверки БД на запрещённое имя
+
+
         //Проверка БД/таблицы
         int checkDbStatus       (string);   //Вернуть статус БД
-        int checkTableStatus    (string);   //Вернуть статус таблицы
-        int checkSystemDirStatus();         //Вернуть статус системной директорииы
+        int checkTableStatus    (string, string);   //Вернуть статус таблицы
+        int checkSystemDirStatus();         //Вернуть статус системной директории
+
+        int getTableId(string); //Вернуть ID таблицы
+        int getDbId(string);    //Вернуть ID БД
 
         int fixDb   (string);   //Починить БД
         int fixTable(string);   //Починить таблицу
