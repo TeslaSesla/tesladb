@@ -33,6 +33,7 @@ int main()
         cout << "9) Delete DB"          << endl;
         cout << "10) Test write time"   << endl;
         cout << "11) Check DB status"   << endl;
+        cout << "12) Check table status"<< endl;
         getline(cin, temp);
         ans = stoi(temp);
 
@@ -113,7 +114,6 @@ int main()
 
 
             case 10:
-
                 cout << "Testing 10000 entries to write" << endl;
                 timer.start();
                 for (int i = 0; i < 10000; i++)
@@ -123,12 +123,18 @@ int main()
                 break;
 
             case 11:
-
                 cout << "Enter DB name: ";
                 getline(cin, temp1);
                 cout << db.checkDbStatus(temp1) << endl;
                 break;
 
+            case 12:
+                cout << "Enter DB name: ";
+                getline(cin, temp1);
+                cout << "Enter table name: ";
+                getline(cin, temp2);
+                cout << db.checkTableStatus(temp1, temp2);
+                break;
 
         }
     }

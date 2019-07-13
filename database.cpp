@@ -753,34 +753,53 @@ int database::checkTableStatus(string dbName, string tableName)
 {
     addLog("Checking table status...");
 
-    //Проверяем БД на запрещённое имя
-    if (dbName == "NONE" || dbName == "NOT_SELECTED" || dbName == "")
-    {
-        addLog("Selected banned or empty DB name", 1);
-        return -6;
-    }
 
     if (checkDbStatus(dbName) == -1)
-        return -2;  //БД связанной с таблицей не существует
+        return -5;  //БД связанной с таблицей не существует
     else if (checkDbStatus(dbName) != 0)
-        return -3;  //Проблемы с БД
+        return -6;  //Проблемы с БД
 
 
-    bool isFounded = false;
+    //Переменные показатели
+    bool isFounded          = false;    //Найдена ли таблица в списке таблиц
+    bool isTableFileOk      = true;     //Состояние файла таблицы
+    bool isTableStructureOk = true;     //Состояние файла структуры таблицы
+    bool isTableOptionsOk   = true;     //Состояние файла параметров таблицы
 
-    bool isTableFileCreatedOk       = false;   //Состояние файла таблицы
-    bool isTableStructureOk         = false;   //Состояние файла структуры таблицы
-    bool isTableOptionsCreatedOk    = false;   //Состояние файла параметров таблицы
+    string tableStructure;      //Структура таблицы взятая из tableName.str
+    string optionsStructure;    //Структура файла параметров
+    int it = 0;                 //Счётчик итераций
 
-    string tableStructure;  //Структура таблицы взятая из tableName.str
-    int it = 0;             //Счётчик итераций
+    try
+    {
+        io::CSVReader<3> in0(TABLES_LIST_FILE);
+        in0.read_header(io::ignore_missing_column, "ID", "dbname", "name");
 
+        int SEARCH_id;          //Поиск таблицы: идентификатор
+        string SEARCH_dbname,   //Поиск таблицы: имя базы данных
+               SEARCH_name;     //Поиск таблицы: имя таблицы
+
+        while(in0.read_row(SEARCH_id, SEARCH_dbname, SEARCH_name))
+        {
+            if (tableName == SEARCH_name && dbName == SEARCH_dbname)
+            {
+                isFounded = true;
+            }
+        }
+    }
+    catch (...)
+    {
+        isFounded = false;
+    }
+
+    //Проверка файла структуры таблицы
     try
     {
         io::LineReader in(dbName + "/" + tableName + ".str");
         while(char*line = in.next_line())
         {
             it++;
+
             if (it == 1)
                 tableStructure = line;
         }
@@ -790,13 +809,69 @@ int database::checkTableStatus(string dbName, string tableName)
         isTableStructureOk = false;
     }
 
-
-    io::LineReader in(dbName + "/" + tableName + ".csv");
-    while(char*line = in.next_line())
+    //Проверка файла таблицы
+    try
     {
-
+        io::LineReader in2(dbName + "/" + tableName + ".csv");
+        while(char*line = in2.next_line())
+        {
+            it++;
+            if (it == 1)
+                tableStructure = line;
+        }
+    }
+    catch (...)
+    {
+        isTableFileOk = false;
     }
 
+    //Проверка файла параметров таблицы
+    it = 0;
+    try
+    {
+        io::LineReader in3(dbName + "/" + tableName + "_options.csv");
+        while(char*line = in3.next_line())
+        {
+            it++;
+            if (it == 1)
+            {
+                optionsStructure = line;
+            }
+        }
+
+        if (optionsStructure != "option, value")
+            isTableOptionsOk = false;
+    }
+    catch (...)
+    {
+        isTableOptionsOk = false;
+    }
+
+
+    if (isTableFileOk == false && isTableOptionsOk == false && isTableStructureOk == false && isFounded == false)
+    {
+        addLog("Table not founded", 1);
+        return -1;
+    }
+
+    if (isTableFileOk == false)
+    {
+        addLog("Table have problems with table file", 1);
+        return -2;
+    }
+    if (isTableOptionsOk == false)
+    {
+        addLog("Table have problems with options file", 1);
+        return -3;
+    }
+    if (isTableStructureOk == false)
+    {
+        addLog("Table have problems with structure file", 1);
+        return -4;
+    }
+
+    //Всё нормально - таблица найдена и исправна
+    return 0;
 }
 
 int database::getTableId(string tableName)
