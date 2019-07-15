@@ -73,7 +73,6 @@ class database
 
 
         //Проверка наличия
-        int checkTableAvlb(string, string = "NOT_SELECTED");    //Проверить наличие таблицы     УДАЛИТЬ ДАННУЮ ФУНКЦИЮ
         int checkDBAvlb   (string);                             //Проверить наличие базы данных УДАЛИТЬ ДАННУЮ ФУНКЦИЮ
 
         // TODO (nikolay#1#): Сделать функцию проверки БД на запрещённое имя

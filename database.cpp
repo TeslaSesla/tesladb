@@ -124,7 +124,7 @@ int database::createTable(string name, string strNames, string strTypes, int inc
 {
 
     //Если такая таблица уже есть
-    if (checkTableAvlb(name) != 0) return -1;
+    if (checkTableStatus(selectedDb_, name) != -1) return -1;
 
 
     //Если не выбрана база данных
@@ -217,9 +217,9 @@ int database::getIncrementColumn(string tableName, int & columnNumber)
 int database::addEntry(string name, string data)
 {
     //Если таблица не существует
-    if (checkTableAvlb(name) != -1)
+    if (checkTableStatus(selectedDb_, name) != 0)
     {
-        addLog("Table already created", 1);
+        addLog("Table not created", 1);
         return -1;
     }
 
@@ -295,7 +295,6 @@ int database::addEntry(string name, string data)
 
 int database::getLastTableLine(string tableName, string & strOut)
 {
-
     io::LineReader in2(selectedDb_ + "/" + tableName + ".csv");
     int it = 0;
     while(char*line = in2.next_line())
@@ -315,7 +314,10 @@ int database::getLastTableLine(string tableName, string & strOut)
 
 int database::delEntry(string tableName, int columnNumber, string columnText)
 {
-    if (checkTableAvlb(tableName) != -1) return -1;
+
+    //Если таблица не найдена (или с ней не всё хорошо)
+    if (checkTableStatus(selectedDb_, tableName) != 0)
+        return -1;
 
 
     ofstream tableTempFile;
@@ -523,48 +525,6 @@ int database::getTableTypes(string tableName, string & typeOut)
         }
     }
     return -1;
-}
-
-int database::checkTableAvlb(string tableName, string dbName)
-{
-    if (dbName == "NOT_SELECTED")
-    {
-        if (selectedDb_ == "NONE")
-        {
-            addLog("No database selected", 2);
-            return -3;
-        }
-        else
-            dbName = selectedDb_;
-    }
-
-    try
-    {
-        //Проверяем наличие таблицы в файле таблиц
-        io::CSVReader<3>in(TABLES_LIST_FILE);
-        in.read_header(io::ignore_missing_column, "ID", "dbname", "name");
-
-        int SEARCH_id;          //Поиск таблицы: идентификатор
-        string SEARCH_dbname,   //Поиск таблицы: имя базы данных
-               SEARCH_name;     //Поиск таблицы: имя таблицы
-
-        while(in.read_row(SEARCH_id, SEARCH_dbname, SEARCH_name))
-        {
-            if (tableName == SEARCH_name && dbName == SEARCH_dbname)
-            {
-                addLog("Founded table with same name", 0);
-                return -1;
-            }
-        }
-    }
-    catch (...)
-    {
-        addLog("Can't read tables list file", 2);
-        return -2;
-    }
-
-    addLog("Table with name " + tableName + " not founded", 0);
-    return 0;
 }
 
 int database::checkDBAvlb(string name)
