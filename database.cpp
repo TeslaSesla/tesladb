@@ -527,32 +527,6 @@ int database::getTableTypes(string tableName, string & typeOut)
     return -1;
 }
 
-int database::checkDBAvlb(string name)
-{
-    //Проверяем наличие базы данных в файле баз данных
-    try
-    {
-        io::CSVReader<2>in(DB_LIST_FILE);
-        in.read_header(io::ignore_missing_column, "ID", "name");
-        int SEARCH_id; string SEARCH_name;
-        while(in.read_row(SEARCH_id, SEARCH_name))
-        {
-            if (name == SEARCH_name)
-            {
-                addLog("Founded database with same name", 0);
-                return -1;
-            }
-        }
-    }
-    catch(...)
-    {
-        addLog("Can't read database list file", 2);
-        return -2;
-    }
-    addLog("Database with name " + name + " not founded", 0);
-    return 0;
-}
-
 int database::checkFileStructure(string fileName, string fileStructure)
 {
     int    it = 0;  //Счётчик итераций
@@ -1007,7 +981,8 @@ int database::addLog(string message, short int signal)
 
 int database::selectDB(string name)
 {
-    if (checkDBAvlb(name) != -1)
+    //Если БД не создана или у неё имеются проблемы
+    if (checkDbStatus(name) != 0)
     {
         addLog("Can't select database " + name, 1);
         return -1;

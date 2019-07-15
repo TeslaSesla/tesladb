@@ -72,8 +72,6 @@ class database
         int getArrInTableByRow (string, int, string, vector<string>&, string &); //Поиск всех подходящих элементов по содержанию
 
 
-        //Проверка наличия
-        int checkDBAvlb   (string);                             //Проверить наличие базы данных УДАЛИТЬ ДАННУЮ ФУНКЦИЮ
 
         // TODO (nikolay#1#): Сделать функцию проверки БД на запрещённое имя
 
