@@ -80,34 +80,7 @@ int database::createDB(string name)
 {
     // TODO (nikolay#1#): Перевести эту функцию на использование функции checkDbStatus
 
-    //Создаём временные переменные
-    int it = 0;             //Счётчик итераций
-    int SEARCH_id;          //Поиск БД: id
-    string SEARCH_name;     //Поиск БД: имя БД
-
-
-    //Заменить на функцию checkBdStatus
-
-    //Ищем индекс последней базы данных
-    io::CSVReader<2>in(DB_LIST_FILE);
-    in.read_header(io::ignore_missing_column, "ID", "name");
-    while(in.read_row(SEARCH_id, SEARCH_name))
-    {
-        if (name == SEARCH_name)
-        {
-            addLog("Can't create database, founded database with same name.", 2);
-            return -1;
-        }
-        it++;
-    }
-
-
-    //Добавляем базу данных в список баз данных
-    ofstream dbFile;
-    dbFile.open(DB_LIST_FILE, ios::app);
-    dbFile << it << ", " << name << endl;
-    dbFile.close();
-
+    addDbToList(name);
 
     //Создаём директорию
     if (boost::filesystem::create_directory(name) == false)
@@ -558,6 +531,108 @@ int database::checkFileStructure(string fileName, string fileStructure)
     }
 
     return -1;
+}
+
+int database::fixDb(string dbName)
+{
+    //Получаем текущую ошибку с БД
+    int errNow = checkDbStatus(dbName);
+    // 0 - БД есть
+    //-1 - БД нет
+
+    //Цикл пока у БД имеются проблемы
+    do
+    {
+
+        switch (errNow)
+        {
+
+            //Папка БД не создана
+            case -2:
+                boost::filesystem::create_directory(dbName);
+                break;
+
+            //БД не найдена в списке БД
+            case -3:
+                addDbToList(dbName);
+                break;
+
+            //Найдено несколько одинаковых наименований БД в файле БД
+            case -4:
+            {
+                ofstream dbTempFile;
+                dbTempFile.open(DB_LIST_FILE, ios::app);
+                if (!dbTempFile)
+                {
+                    addLog("Can't create databases.csv temp file", 2);
+                    return -1;
+                }
+
+
+                dbTempFile << "ID, dbname, name" << endl;
+                io::CSVReader<2> in(DB_LIST_FILE);
+                in.read_header(io::ignore_missing_column, "ID", "name");
+                int SEARCH_id; string SEARCH_name;
+                while(in.read_row(SEARCH_id, SEARCH_name))
+                {
+                    //Если имя базы данных (таблицы которой нужно удалить) не совпадает с именем найденной базы данных - записываем
+                    if (dbName != SEARCH_name)
+                        dbTempFile << SEARCH_id << ", " << SEARCH_name << endl;
+                }
+                dbTempFile.close();
+
+                boost::filesystem::remove(DB_LIST_FILE);
+                boost::filesystem::rename("dbFiles/databases.tmp", DB_LIST_FILE);
+            }
+
+            //Найдена ошибка несвязанная с БД
+            default:
+                return -2;
+
+        }
+
+        //Обновляем текущую ошибку
+        errNow = checkDbStatus(dbName);
+
+    }while(errNow != 0 || errNow != -1);
+
+    if (errNow == 0)
+        //Все ошибки исправлены
+        return 0;
+    else
+        //БД не существует
+        return -1;
+
+}
+
+int database::addDbToList(string dbName)
+{
+    //Создаём временные переменные
+    int it = 0;             //Счётчик итераций
+    int SEARCH_id;          //Поиск БД: id
+    string SEARCH_name;     //Поиск БД: имя БД
+
+    //Ищем индекс последней базы данных
+    io::CSVReader<2>in(DB_LIST_FILE);
+    in.read_header(io::ignore_missing_column, "ID", "name");
+    while(in.read_row(SEARCH_id, SEARCH_name))
+    {
+        if (dbName == SEARCH_name)
+        {
+            addLog("Can't add database to list, founded database with same name.", 1);
+            return -1;
+        }
+        it++;
+    }
+
+
+    //Добавляем базу данных в список баз данных
+    ofstream dbFile;
+    dbFile.open(DB_LIST_FILE, ios::app);
+    dbFile << it << ", " << dbName << endl;
+    dbFile.close();
+
+    return 0;
 }
 
 int database::checkSystemDirStatus()

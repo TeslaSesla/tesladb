@@ -77,12 +77,12 @@ class database
 
 
         //Проверка БД/таблицы
-        int checkDbStatus       (string);   //Вернуть статус БД
+        int checkDbStatus       (string);           //Вернуть статус БД
         int checkTableStatus    (string, string);   //Вернуть статус таблицы
-        int checkSystemDirStatus();         //Вернуть статус системной директории
+        int checkSystemDirStatus();                 //Вернуть статус системной директории
 
         int getTableId(string); //Вернуть ID таблицы
-        int getDbId(string);    //Вернуть ID БД
+        int getDbId   (string); //Вернуть ID БД
 
         int fixDb   (string);   //Починить БД
         int fixTable(string);   //Починить таблицу
@@ -108,7 +108,7 @@ class database
 
         //Добавление данных в списки
         int addTableToList(string); //Добавить таблицу в список таблиц
-        int addDBToList   (string); //Добавить базу данных в список баз данных
+        int addDbToList   (string); //Добавить базу данных в список баз данных
 
         int checkFileStructure(string, string); //Проверить структуру файла
 
