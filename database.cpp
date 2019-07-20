@@ -45,7 +45,7 @@ database::database()
 int database::createSystemDir()
 {
     //Если директория была только что создана
-    if (boost::filesystem::create_directory("dbFiles") == true)
+    if (fs::create_directories("dbFiles") == true)
     {
         //Директория была только что создана, создаём файлы
         ofstream logFile;
@@ -83,7 +83,7 @@ int database::createDB(string name)
     addDbToList(name);
 
     //Создаём директорию
-    if (boost::filesystem::create_directory(name) == false)
+    if (fs::create_directories(name) == false)
     {
         //Папка с названием базы данных уже существует
         addLog("Can't create database directory", 2);
@@ -324,10 +324,10 @@ int database::delEntry(string tableName, int columnNumber, string columnText)
     tableTempFile.close();
 
 
-    if (boost::filesystem::remove(selectedDb_ + "/" + tableName + ".csv") == false)
+    if (fs::remove_all(selectedDb_ + "/" + tableName + ".csv") == false)
         addLog("Can't delete file", 2);
 
-    boost::filesystem::rename(selectedDb_ + "/" + tableName + ".tmp", selectedDb_ + "/" + tableName + ".csv");
+    fs::rename(selectedDb_ + "/" + tableName + ".tmp", selectedDb_ + "/" + tableName + ".csv");
 
 
 
@@ -345,7 +345,7 @@ int database::delDB(string dbName)
 
 
     //Удаляем папку с базой данных
-    if (boost::filesystem::remove_all(dbName) == false)
+    if (fs::remove_all(dbName) == false)
         addLog("Can't delete database directory", 1);
 
     return 0;
@@ -375,8 +375,8 @@ int database::delDbFromList(string dbName)
     }
     databasesTempFile.close();
 
-    boost::filesystem::remove(DB_LIST_FILE);
-    boost::filesystem::rename("dbFiles/databases.tmp", DB_LIST_FILE);
+    remove(DB_LIST_FILE);
+    fs::rename("dbFiles/databases.tmp", DB_LIST_FILE);
 
 
     return 0;
@@ -405,8 +405,8 @@ int database::delTablesFromListByDb(string dbName)
     }
     tablesTempFile.close();
 
-    boost::filesystem::remove(TABLES_LIST_FILE);
-    boost::filesystem::rename("dbFiles/tables.tmp", TABLES_LIST_FILE);
+    remove(TABLES_LIST_FILE);
+    fs::rename("dbFiles/tables.tmp", TABLES_LIST_FILE);
 
     return 0;
 }
@@ -549,7 +549,7 @@ int database::fixDb(string dbName)
 
             //Папка БД не создана
             case -2:
-                boost::filesystem::create_directory(dbName);
+                fs::create_directory(dbName);
                 break;
 
             //БД не найдена в списке БД
@@ -581,8 +581,8 @@ int database::fixDb(string dbName)
                 }
                 dbTempFile.close();
 
-                boost::filesystem::remove(DB_LIST_FILE);
-                boost::filesystem::rename("dbFiles/databases.tmp", DB_LIST_FILE);
+                remove(DB_LIST_FILE);
+                fs::rename("dbFiles/databases.tmp", DB_LIST_FILE);
             }
 
             //Найдена ошибка несвязанная с БД
@@ -638,7 +638,7 @@ int database::addDbToList(string dbName)
 int database::checkSystemDirStatus()
 {
     addLog("Checking system directory");
-    if (boost::filesystem::is_directory("dbFiles") == false)
+    if (fs::is_directory("dbFiles") == false)
     {
         addLog("Can't find system directory");
         return -1;
@@ -687,7 +687,7 @@ int database::checkDbStatus(string dbName)
     bool isMultipleDeclaration = false; //Присутствует ли множественное объявление БД в файле баз данных
 
     //Ищем директорию базы данных
-    if (boost::filesystem::is_directory(dbName) == true)
+    if (fs::is_directory(dbName) == true)
     {
         addLog("Database directory: OK");
         isDirCreated = true;

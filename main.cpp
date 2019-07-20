@@ -2,8 +2,6 @@
 #include <string>
 #include <string.h>
 
-#include <boost/timer/timer.hpp>
-
 #include "database.h"
 
 using namespace std;
@@ -11,7 +9,6 @@ using namespace std;
 int main()
 {
     database db;
-    boost::timer::cpu_timer timer;
 
     //cout << __func__ << endl;
 
@@ -115,11 +112,8 @@ int main()
 
             case 10:
                 cout << "Testing 10000 entries to write" << endl;
-                timer.start();
                 for (int i = 0; i < 10000; i++)
                     db.addEntry("table", "hello, 50");
-                timer.stop();
-                cout << timer.format() << endl;
                 break;
 
             case 11:

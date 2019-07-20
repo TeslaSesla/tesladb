@@ -33,11 +33,12 @@
 #include <vector>
 #include <cerrno>
 
-#include <sys/stat.h>
-#include <boost/filesystem.hpp>
+#include <experimental/filesystem>
 
 #include "CSVread/csv.h"
 
+
+namespace fs = std::experimental::filesystem;
 using namespace std;
 
 struct rawStr
