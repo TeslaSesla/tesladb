@@ -87,7 +87,7 @@ int database::createDB(string name)
     {
         //Папка с названием базы данных уже существует
         addLog("Can't create database directory", 2);
-        return -2;
+        return -1;
     }
 
     return 0;
